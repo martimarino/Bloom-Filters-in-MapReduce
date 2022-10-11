@@ -18,11 +18,11 @@
         </plugins>
     </build>
     <name>Bloom-Filters-in-MapReduce</name>
-    <url>http://maven.apache.org</url>
+    <url>https://maven.apache.org</url>
 
     <properties>
         <java.version>1.8</java.version>
-        <hadoop.version>3.1.3</hadoop.version>
+        <hadoop.version>3.3.2</hadoop.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -30,7 +30,7 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>3.8.1</version>
+            <version>4.13.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
