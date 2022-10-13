@@ -24,6 +24,12 @@ public class BloomFilter implements Writable {
         murmurHashInstance = Hash.getInstance(MURMUR_HASH);
     }
 
+    public BloomFilter(BloomFilter bf){
+        this.bf = (BitSet) bf.bf.clone();
+        this.m = bf.m;
+        this.k = bf.k;
+    }
+
     public boolean insert(String id) {
         int index;
         for(int i = 0; i < k; i++)
