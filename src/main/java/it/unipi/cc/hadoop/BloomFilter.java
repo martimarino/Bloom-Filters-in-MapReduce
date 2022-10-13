@@ -28,7 +28,8 @@ public class BloomFilter implements Writable {
         int index;
         for(int i = 0; i < k; i++)
         {
-            index = (murmurHashInstance.hash(id.getBytes(), i)) % m;
+            index = Math.abs(murmurHashInstance.hash(id.getBytes(), i) % m);
+            System.out.println(index);
             bf.set(index, true);
         }
         return true;
@@ -37,7 +38,7 @@ public class BloomFilter implements Writable {
     public boolean find(String id) {
         int index;
         for(int i=0; i<k; i++){
-            index = murmurHashInstance.hash(id.getBytes(), i);
+            index = Math.abs(murmurHashInstance.hash(id.getBytes(), i));
             index = index % m;
             if (!bf.get(index))
                 return false;
@@ -57,6 +58,11 @@ public class BloomFilter implements Writable {
 
     @Override
     public void readFields(DataInput dataInput) throws IOException {
+
+    }
+
+    public static void main(String[] args){
+        BloomFilter bf = new BloomFilter(3, 10);
 
     }
 }
