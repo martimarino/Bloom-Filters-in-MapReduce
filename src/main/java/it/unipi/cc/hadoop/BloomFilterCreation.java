@@ -19,26 +19,25 @@ public class BloomFilterCreation {
     public static class BloomFilterCreationMapper{
         public static class BFCMapper extends Mapper<Object, Text, IntWritable, BloomFilter> {
             ArrayList<BloomFilter> bloomFilters = new ArrayList<>();
-
-            final int n_rates = 10;
-            //creation of the 10 blooomfilter basing on corresponding m,k
+            final int n_rates = 10; //number of rates
+            //creation of the 10 blooomfilters basing on corresponding m,k
             public void init(Context context) {
 
                 for (int i = 0; i < n_rates; i++) {
-                    int m = Integer.parseInt(context.getConfiguration().get("filter_" + (i+1) + "_m")); //need to define after
-                    int k = Integer.parseInt(context.getConfiguration().get("filter_" + (i+1) + "_k")); //need to define after
-                    bloomFilters.add(i+1, new BloomFilter(m, k));
+                    int m = Integer.parseInt(context.getConfiguration().get("filter_" + i + "_m")); //need to define after
+                    int k = Integer.parseInt(context.getConfiguration().get("filter_" + i + "_k")); //need to define after
+                    bloomFilters.add(i, new BloomFilter(m, k));
                 }
             }
             //insert into bloomfilter corresponding to the calculated rating, the id of the film, for each film
             public void map(Object object, Text value, Context context){
                     String[] tokens = value.toString().split("\t"); //id (0) , rating (1)
-                    int roundedRating = (int) Math.round(Double.parseDouble(tokens[1]));
+                    int roundedRating = (int) Math.round(Double.parseDouble(tokens[1]))-1;
                     bloomFilters.get(roundedRating).insert(tokens[0]);
             }
             public void emits(Context context) throws IOException, InterruptedException {
                 for(int i = 0; i < n_rates; i++)
-                    context.write(new IntWritable(i+1), bloomFilters.get(i+1));
+                    context.write(new IntWritable(i+1), bloomFilters.get(i));
             }
         }
 
