@@ -1,6 +1,5 @@
 package it.unipi.cc.hadoop;
 
-import it.unipi.cc.hadoop.ParameterCalibration;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -13,7 +12,7 @@ public class BloomFilterDriver {
     public static void main(String[] args) throws IOException, InterruptedException, ClassNotFoundException {
         Configuration conf = new Configuration();
 
-        Parameters parameters = new Parameters("config.properties");
+        Parameters parameters = new Parameters("/Users/luanabussu/GitHub/Bloom-Filters-in-MapReduce/conf.properties");
 
         String DIR = parameters.getOutputPath()+"/";
         conf.set("input.path", parameters.getInputPath());

@@ -21,29 +21,28 @@ public class ParameterCalibration {
 
         public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
             String record = value.toString();
-            if (record == null || record.length() != 3)
+            if (record == null || record.startsWith("tconst"))
                 return;
-
             String[] tokens = record.split("\t");
 
             int rate = Math.round(Float.parseFloat(tokens[1])); // <title, rating, numVotes>
             counter[rate -1]++;
 
-            for(int i: counter)
-                context.write(new IntWritable(i+1), new IntWritable(counter[i])); //<key, value>
+            for(int i=0; i<counter.length; i++)
+                context.write(new IntWritable(i + 1), new IntWritable(counter[i])); //<key, value>
         }
     }
 
     public static class PCReducer extends Reducer<IntWritable, IntWritable, IntWritable, Text> {
 
         public void reduce(IntWritable key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
-            int n = 0;
+            long n = 0;
             while(values.iterator().hasNext())
                 n += values.iterator().next().get();
 
             double p = 0.01; //parametri configurazione ?
-            int m = (int) (- ( n * Math.log(p) ) / (Math.pow(Math.log(2),2.0)));
-            int k = (int) ((m/n) * Math.log(2));
+            long m = (long) (- ( n * Math.log(p) ) / (Math.pow(Math.log(2),2)));
+            long k = (long) ((m/n) * Math.log(2));
 
             Text value = new Text(n + "\t" + m + "\t" + k);
             context.write(key, value);
@@ -65,8 +64,7 @@ public class ParameterCalibration {
         job.setOutputKeyClass(IntWritable.class);
         job.setOutputValueClass(Text.class);
 
-        double p = 0.01; //configurazione da file?
-        job.getConfiguration().setDouble("p", p);
+        job.getConfiguration().setDouble("p", Double.parseDouble(conf.get("p")));
 
         //path da passare come argomento(?)
         FileInputFormat.addInputPath(job, new Path(conf.get("input.path"))); //input file that needs to be used by MapReduce program
