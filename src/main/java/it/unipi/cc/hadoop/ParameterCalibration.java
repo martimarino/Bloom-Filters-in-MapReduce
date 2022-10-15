@@ -24,9 +24,9 @@ public class ParameterCalibration {
             if (record == null || record.length() != 3)
                 return;
 
-            String[] attributes = record.split("\t");
+            String[] tokens = record.split("\t");
 
-            int rate = Math.round(Float.parseFloat(attributes[1])); // <title, rating, numVotes>
+            int rate = Math.round(Float.parseFloat(tokens[1])); // <title, rating, numVotes>
             counter[rate -1]++;
 
             for(int i: counter)
@@ -48,35 +48,33 @@ public class ParameterCalibration {
             Text value = new Text(n + "\t" + m + "\t" + k);
             context.write(key, value);
         }
+    }
+    public static boolean main(Job job) throws IOException, InterruptedException, ClassNotFoundException {
+        Configuration conf = job.getConfiguration();
 
-        public static boolean main(String[] args) throws IOException, InterruptedException, ClassNotFoundException {
-            Configuration conf = new Configuration();
+        job.setJarByClass(ParameterCalibration.class);
 
-            Job job = Job.getInstance(conf, "ParameterCalibration");
-            job.setJarByClass(ParameterCalibration.class);
+        job.setMapperClass(PCMapper.class);
+        job.setReducerClass(PCReducer.class);
 
-            job.setMapperClass(PCMapper.class);
-            job.setReducerClass(PCReducer.class);
+        // mapper's output key and output value
+        job.setMapOutputKeyClass(IntWritable.class);
+        job.setMapOutputValueClass(IntWritable.class);
 
-            // mapper's output key and output value
-            job.setMapOutputKeyClass(IntWritable.class);
-            job.setMapOutputValueClass(IntWritable.class);
+        // reducer's output key and output value
+        job.setOutputKeyClass(IntWritable.class);
+        job.setOutputValueClass(Text.class);
 
-            // reducer's output key and output value
-            job.setOutputKeyClass(IntWritable.class);
-            job.setOutputValueClass(Text.class);
+        double p = 0.01; //configurazione da file?
+        job.getConfiguration().setDouble("p", p);
 
-            double p = 0.01; //configurazione da file?
-            job.getConfiguration().setDouble("parameter.calibration.p", p);
+        //path da passare come argomento(?)
+        FileInputFormat.addInputPath(job, new Path(conf.get("input.path"))); //input file that needs to be used by MapReduce program
+        FileOutputFormat.setOutputPath(job, new Path(conf.get("output.path"))); //output file
 
-            //path da passare come argomento(?)
-            FileInputFormat.addInputPath(job, new Path(args[0])); //input file that needs to be used by MapReduce program
-            FileOutputFormat.setOutputPath(job, new Path(args[1])); //output file
+        job.setInputFormatClass(TextInputFormat.class);
+        job.setOutputFormatClass(TextOutputFormat.class);
 
-            job.setInputFormatClass(TextInputFormat.class);
-            job.setOutputFormatClass(TextOutputFormat.class);
-
-            return job.waitForCompletion(true);
-        }
+        return job.waitForCompletion(true);
     }
 }

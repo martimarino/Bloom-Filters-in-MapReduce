@@ -69,6 +69,5 @@ public class BloomFilter implements Writable {
 
     public static void main(String[] args){
         BloomFilter bf = new BloomFilter(3, 10);
-
     }
 }

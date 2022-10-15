@@ -9,7 +9,6 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.util.GenericOptionsParser;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -55,18 +54,9 @@ public class BloomFilterCreation {
             }
         }
 
-        public static boolean main(String[] args) throws IOException, InterruptedException, ClassNotFoundException {
-            Configuration conf = new Configuration();
+        public static boolean main(Job job) throws IOException, InterruptedException, ClassNotFoundException {
+            Configuration conf = job.getConfiguration();
 
-            String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
-
-            //not expected number of arguments
-            if (otherArgs.length != 2) {
-                System.err.println("Usage: BloomFilterCreation <input> <output>");
-                System.exit(2);
-            }
-
-            Job job = Job.getInstance(conf, "BloomFilterCreation");
             job.setJarByClass(BloomFilterCreation.class);
 
             job.setMapperClass(BFCMapper.class);
@@ -80,8 +70,8 @@ public class BloomFilterCreation {
             job.setOutputKeyClass(IntWritable.class);
             job.setOutputValueClass(BloomFilter.class);
 
-            FileInputFormat.addInputPath(job, new Path(otherArgs[0]));
-            FileOutputFormat.setOutputPath(job, new Path(otherArgs[1]));
+            FileInputFormat.addInputPath(job, new Path(conf.get("input.path")));
+            FileOutputFormat.setOutputPath(job, new Path(conf.get("output.path")));
 
             return job.waitForCompletion(true);
         }
