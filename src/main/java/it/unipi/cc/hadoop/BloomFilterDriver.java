@@ -1,5 +1,7 @@
 package it.unipi.cc.hadoop;
 
+import it.unipi.cc.hadoop.model.Parameters;
+import it.unipi.cc.hadoop.mapreduce.ParameterCalibration;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -9,8 +11,13 @@ import java.io.IOException;
 
 public class BloomFilterDriver {
 
+    private static String INPUT_PATH;
+    private static int NUM_REDUCERS;
+
     public static void main(String[] args) throws IOException, InterruptedException, ClassNotFoundException {
         Configuration conf = new Configuration();
+
+
 
         Parameters parameters = new Parameters("/Users/luanabussu/GitHub/Bloom-Filters-in-MapReduce/conf.properties");
 

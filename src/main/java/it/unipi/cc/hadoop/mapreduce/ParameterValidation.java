@@ -1,6 +1,6 @@
-package it.unipi.cc.hadoop.stages;
+package it.unipi.cc.hadoop.mapreduce;
 
-import it.unipi.cc.hadoop.BloomFilter;
+import it.unipi.cc.hadoop.model.BloomFilter;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
@@ -9,19 +9,16 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 public class ParameterValidation {
-
     private static int n_rates;
-    private static int[] fp_counters;
     private static final IntWritable outputKey = new IntWritable();
     private static final IntWritable outputVal = new IntWritable();
 
-    public class PVMapper extends Mapper<IntWritable, IntWritable, IntWritable, IntWritable>{
-
+    public static class PVMapper extends Mapper<IntWritable, IntWritable, IntWritable, IntWritable>{
+        private int[] fp_counters;
         private final ArrayList<BloomFilter> bloomFilters = new ArrayList<>();
 
         @Override
         public void setup(Context context) throws IOException, InterruptedException {
-
             super.setup(context);
             n_rates = context.getConfiguration().getInt("n_rates", 0);
             if(n_rates == 0)
@@ -33,8 +30,7 @@ public class ParameterValidation {
         }
 
         @Override
-        public void map(IntWritable film, IntWritable value, Context context) throws IOException, InterruptedException {
-            super.map(film, value, context);
+        public void map(IntWritable film, IntWritable value, Context context) {
             String[] split = value.toString().split("\t");  //id (0) , rating (1)
             int roundedRating = (int) Math.round(Double.parseDouble(split[1]))-1;
             for(int i = 0; i < n_rates; i++) {
@@ -56,15 +52,13 @@ public class ParameterValidation {
 
     }
 
-    public class PVReducer extends Reducer<IntWritable, IntWritable, IntWritable, IntWritable> {
-
+    public static class PVReducer extends Reducer<IntWritable, IntWritable, IntWritable, IntWritable> {
         private int sum = 0;
 
         // rate and mappers count in input
         @Override
-        public void reduce(IntWritable key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
-
-            for (IntWritable value : values)
+        public void reduce(IntWritable key, Iterable<IntWritable> mapper_counts, Context context) {
+            for (IntWritable value : mapper_counts)
                 sum += value.get();
         }
 

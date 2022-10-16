@@ -1,6 +1,5 @@
-package it.unipi.cc.hadoop;
+package it.unipi.cc.hadoop.model;
 
- import org.apache.hadoop.io.ByteWritable;
  import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Writable;
@@ -15,9 +14,9 @@ import org.apache.hadoop.util.hash.MurmurHash;
 import static org.apache.hadoop.util.hash.Hash.MURMUR_HASH;
 
 public class BloomFilter implements Writable {
-    IntWritable k;
-    IntWritable m;
-    public BitSet bf;
+    private IntWritable k;
+    private IntWritable m;
+    private BitSet bf;
 
     static Hash murmurHashInstance = MurmurHash.getInstance(MURMUR_HASH);
 
@@ -34,12 +33,18 @@ public class BloomFilter implements Writable {
         this.k = bf.k;
     }
 
+    public void setBf(BitSet bf) { this.bf = bf; }
+
     public void setM(IntWritable m) {
         this.m = m;
     }
 
     public void setK(IntWritable k) {
         this.k = k;
+    }
+
+    public BitSet getBf() {
+        return bf;
     }
 
     public IntWritable getM() {
@@ -86,17 +91,17 @@ public class BloomFilter implements Writable {
     }
 
     @Override
-    public void write(DataOutput dataOutput) throws IOException {
-        serializeBf(bf).write(dataOutput);
-        k.write(dataOutput);
-        m.write(dataOutput);
+    public void write(DataOutput out) throws IOException {
+        serializeBf(bf).write(out);
+        k.write(out);
+        m.write(out);
     }
 
     @Override
-    public void readFields(DataInput dataInput) throws IOException {
-        serializeBf(bf).readFields(dataInput);
-        k.readFields(dataInput);
-        m.readFields(dataInput);
+    public void readFields(DataInput in) throws IOException {
+        serializeBf(bf).readFields(in);
+        k.readFields(in);
+        m.readFields(in);
     }
 
 }

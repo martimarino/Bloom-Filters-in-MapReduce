@@ -1,4 +1,4 @@
-package it.unipi.cc.hadoop;
+package it.unipi.cc.hadoop.model;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;

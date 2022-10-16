@@ -1,6 +1,6 @@
-package it.unipi.cc.hadoop.stages;
+package it.unipi.cc.hadoop.mapreduce;
 
-import it.unipi.cc.hadoop.BloomFilter;
+import it.unipi.cc.hadoop.model.BloomFilter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
@@ -51,7 +51,7 @@ public class BloomFilterCreation {
         public void reduce(IntWritable key, Iterable<BloomFilter> values, Context context) throws IOException, InterruptedException {
             result = new BloomFilter(values.iterator().next());
             while(values.iterator().hasNext()) {
-                result.or(values.iterator().next().bf);
+                result.or(values.iterator().next().getBf());
             }
 
             context.write(key, result); //<rating, bloomfilter>

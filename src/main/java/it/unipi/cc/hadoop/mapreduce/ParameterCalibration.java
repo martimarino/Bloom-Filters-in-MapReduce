@@ -1,4 +1,4 @@
-package it.unipi.cc.hadoop.stages;
+package it.unipi.cc.hadoop.mapreduce;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
