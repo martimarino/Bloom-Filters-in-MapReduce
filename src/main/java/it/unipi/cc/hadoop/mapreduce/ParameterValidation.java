@@ -23,8 +23,14 @@ public class ParameterValidation {
             n_rates = context.getConfiguration().getInt("n_rates", 0);
             if(n_rates == 0)
                 System.exit(-1);
+
             fp_counters = new int[n_rates];
             for(int i = 0; i < n_rates; i++) {
+                // prendere i filters da file
+
+
+
+
                 bloomFilters.set(i, new BloomFilter());
             }
         }

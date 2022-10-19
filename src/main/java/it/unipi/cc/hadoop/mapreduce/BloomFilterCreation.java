@@ -18,10 +18,17 @@ import java.util.ArrayList;
 public class BloomFilterCreation {
 
     public static class BFCMapper extends Mapper<Object, Text, IntWritable, BloomFilter> {
-        ArrayList<BloomFilter> bloomFilters = new ArrayList<>();
-        final int n_rates = 10; //number of rates
+        private static ArrayList<BloomFilter> bloomFilters = new ArrayList<>();
+        private static int n_rates; //number of rates
+
+        private static final IntWritable outputKey = new IntWritable();
+        private static BloomFilter outputVal = new BloomFilter();
+
+
         //creation of the 10 blooom filters basing on corresponding m,k
         public void setup(Context context) {
+
+            n_rates = context.getConfiguration().getInt("n_rates", 0);
 
             for (int i = 0; i < n_rates; i++) {
                 int m = Integer.parseInt(context.getConfiguration().get("filter_" + i + "_m")); //need to define after
@@ -39,54 +46,24 @@ public class BloomFilterCreation {
                 bloomFilters.get(roundedRating).insert(tokens[0]);
         }
         public void cleanup(Context context) throws IOException, InterruptedException {
-            for(int i = 0; i < n_rates; i++)
-                context.write(new IntWritable(i+1), bloomFilters.get(i));
+            for(int i = 0; i < n_rates; i++) {
+                outputKey.set(i + 1);
+                context.write(outputKey, bloomFilters.get(i));
+            }
         }
     }
 
 
     public static class BFCReducer extends Reducer<IntWritable, BloomFilter, IntWritable, BloomFilter> { //<rating, bloomfilters, rating, bloomfilter
-        BloomFilter result;
+        private static BloomFilter result;
         //for all the bloomfilter received, doing the or
         public void reduce(IntWritable key, Iterable<BloomFilter> values, Context context) throws IOException, InterruptedException {
             result = new BloomFilter(values.iterator().next());
-            while(values.iterator().hasNext()) {
-                result.or(values.iterator().next().getBf());
+            while (values.iterator().hasNext()) {
+                result.or(values.iterator().next().getBitSet());
             }
-
             context.write(key, result); //<rating, bloomfilter>
         }
-    }
-
-    public static boolean main(String[] args) throws IOException, InterruptedException, ClassNotFoundException {
-        Configuration conf = new Configuration();
-
-        String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
-
-        //not expected number of arguments
-        if (otherArgs.length != 2) {
-            System.err.println("Usage: BloomFilterCreation <input> <output>");
-            System.exit(2);
-        }
-
-        Job job = Job.getInstance(conf, "BloomFilterCreation");
-        job.setJarByClass(BloomFilterCreation.class);
-
-        job.setMapperClass(BFCMapper.class);
-        job.setReducerClass(BFCReducer.class);
-
-        // mapper's output key and output value
-        job.setMapOutputKeyClass(IntWritable.class);
-        job.setMapOutputValueClass(BloomFilter.class);
-
-        // reducer's output key and output value
-        job.setOutputKeyClass(IntWritable.class);
-        job.setOutputValueClass(BloomFilter.class);
-
-        FileInputFormat.addInputPath(job, new Path(otherArgs[0]));
-        FileOutputFormat.setOutputPath(job, new Path(otherArgs[1]));
-
-        return job.waitForCompletion(true);
     }
 
 }

@@ -1,8 +1,6 @@
 package it.unipi.cc.hadoop.model;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.Properties;
 
 public class Parameters {
@@ -11,11 +9,7 @@ public class Parameters {
     private double p;
 
     // Hadoop
-    private int nReducersJob0;
-    private int nReducersJob1;
-    private int nReducersJob2;
-    private int nLineSplitJob1;
-    private boolean verbose;
+    private int numReducer;
 
     public Parameters(String path) {
         Properties prop = new Properties();
@@ -24,10 +18,7 @@ public class Parameters {
         try {
             fis = new FileInputStream(path);
             prop.load(fis);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            System.exit(1);
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             System.exit(1);
         }
@@ -37,27 +28,23 @@ public class Parameters {
         p = Double.parseDouble(prop.getProperty("p"));
     }
 
-    public String getInputPath() {
-        return inputPath;
-    }
-
     public void setInputPath(String inputPath) {
         this.inputPath = inputPath;
     }
-
-    public String getOutputPath() {
-        return outputPath;
-    }
-
+    public String getInputPath() { return inputPath; }
     public void setOutputPath(String outputPath) {
         this.outputPath = outputPath;
     }
-
-    public double getP() {
-        return p;
+    public String getOutputPath() {
+        return outputPath;
     }
-
     public void setP(double p) {
         this.p = p;
     }
+    public double getP() {
+        return p;
+    }
+    public void setNumReducer(int numReducer) { this.numReducer = numReducer; }
+    public int getNumReducer() { return numReducer; }
+
 }
