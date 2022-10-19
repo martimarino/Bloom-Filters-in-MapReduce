@@ -6,6 +6,7 @@ import it.unipi.cc.hadoop.mapreduce.ParameterValidation;
 import it.unipi.cc.hadoop.model.BloomFilter;
 import it.unipi.cc.hadoop.model.Parameters;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
@@ -16,7 +17,11 @@ import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Driver {
 
@@ -24,12 +29,16 @@ public class Driver {
 
         Configuration conf = new Configuration();
 
-        Parameters parameters = new Parameters("../../../conf.properties");
+        String userDirectory = System.getProperty("user.dir");
+        Parameters parameters = new Parameters(userDirectory + "/conf.properties");
 
         String DIR = parameters.getOutputPath()+"/";
         conf.set("input.path", parameters.getInputPath());
         conf.set("output.path", parameters.getOutputPath());
         conf.setDouble("p", parameters.getP());
+        System.out.println(parameters.getNumReducers());
+        conf.setInt("num_reducers", parameters.getNumReducers());
+        conf.setInt("n_rates", parameters.getnRates());
 
         conf.set("output.parameter-calibration", DIR + "parameter-calibration");
         conf.set("output.bloom-filters-creation", DIR + "bloom-filters-creation");
@@ -43,6 +52,31 @@ public class Driver {
         if(!calibrateParams(conf)){
             fs.close();
             System.exit(-1);
+        }
+
+        System.out.println("FASE 1 TERMINATA");
+        FileStatus[] status = fs.listStatus(new Path(DIR));
+        List<String> param = new ArrayList<String>();
+
+        for(FileStatus filestatus : status) {
+            BufferedReader br = new BufferedReader(new InputStreamReader(fs.open(filestatus.getPath())));
+            for(String line = br.readLine(); line != null; line = br.readLine()) {
+                String[] sp = line.split("\t");
+                int m = Integer.parseInt(sp[1]);
+                int k = Integer.parseInt(sp[2]);
+                param.add(m + " " + k);
+            }
+            br.close();
+        }
+
+        for(int i = 0; i < 10; i++) {
+
+
+            String[] token = param.get(i).split(" ");
+            if(i == 0)
+                conf.set("filter_k", token[1]);
+            conf.set("filter_" + (i+1) + "_m", token[0]);
+            System.out.println(conf.get("filter_" + (i+1) + "_m"));
         }
 
         if (!createBloomFilters(conf)) {
@@ -66,8 +100,7 @@ public class Driver {
         // reducer's output key and output value
         job.setOutputKeyClass(IntWritable.class);
         job.setOutputValueClass(Text.class);
-
-        job.setNumReduceTasks(Integer.parseInt(conf.get("numReducer")));
+        job.setNumReduceTasks(Integer.parseInt(conf.get("num_reducers")));
         job.getConfiguration().setDouble("p", Double.parseDouble(conf.get("p")));
 
         FileInputFormat.addInputPath(job, new Path(conf.get("input.path"))); //input file that needs to be used by MapReduce program
@@ -89,7 +122,7 @@ public class Driver {
 
         // mapper's output key and output value
         job.setMapOutputKeyClass(IntWritable.class);
-        job.setMapOutputValueClass(BloomFilter.class);
+        job.setMapOutputValueClass(IntWritable.class);
 
         // reducer's output key and output value
         job.setOutputKeyClass(IntWritable.class);

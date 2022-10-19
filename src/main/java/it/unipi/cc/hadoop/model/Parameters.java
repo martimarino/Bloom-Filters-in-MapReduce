@@ -9,7 +9,9 @@ public class Parameters {
     private double p;
 
     // Hadoop
-    private int numReducer;
+    private int numReducers;
+
+    private int nRates;
 
     public Parameters(String path) {
         Properties prop = new Properties();
@@ -26,6 +28,8 @@ public class Parameters {
         inputPath = prop.getProperty("inputPath");
         outputPath = prop.getProperty("outputPath");
         p = Double.parseDouble(prop.getProperty("p"));
+        setNumReducers(Integer.parseInt(prop.getProperty("numReducers")));
+        setnRates(Integer.parseInt(prop.getProperty("nRates")));
     }
 
     public void setInputPath(String inputPath) {
@@ -44,7 +48,14 @@ public class Parameters {
     public double getP() {
         return p;
     }
-    public void setNumReducer(int numReducer) { this.numReducer = numReducer; }
-    public int getNumReducer() { return numReducer; }
+    public void setNumReducers(int numReducers) { this.numReducers = numReducers; }
+    public int getNumReducers() { return numReducers; }
 
+    public int getnRates() {
+        return nRates;
+    }
+
+    public void setnRates(int nRates) {
+        this.nRates = nRates;
+    }
 }

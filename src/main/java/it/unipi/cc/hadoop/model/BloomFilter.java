@@ -4,6 +4,7 @@ import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.util.hash.MurmurHash;
+import org.apache.hadoop.yarn.webapp.hamlet2.Hamlet;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -23,10 +24,14 @@ public class BloomFilter implements Writable {
         bf = new BytesWritable();
     }
 
-    public BloomFilter(BloomFilter bf){
-        this.setBitSet((BitSet) bf.getBitSet().clone());
-        this.m = bf.m;
-        this.k = bf.k;
+    public BloomFilter(int k, int m, BitSet b){
+        this.k =new IntWritable(k);
+        this.m = new IntWritable(m);
+        //creazione byteswritable dal bitset
+        byte[] arr = b.toByteArray();
+        bf = new BytesWritable();
+        bf.setSize(arr.length);
+        bf.set(arr, 0, arr.length);
     }
 
     public void setM(IntWritable m) {
@@ -37,12 +42,6 @@ public class BloomFilter implements Writable {
         this.k = k;
     }
 
-    public void setBitSet(BitSet b) {
-        byte[] arr = b.toByteArray();
-        bf = new BytesWritable();
-        bf.setSize(arr.length);
-        bf.set(arr, 0, arr.length);
-    }
     public BitSet getBitSet(){
         return BitSet.valueOf(bf.getBytes());
     }
@@ -55,19 +54,6 @@ public class BloomFilter implements Writable {
         return k;
     }
 
-    public boolean insert(String id) {
-        int index;
-        for(int i = 0; i < k.get(); i++)
-        {
-            index = Math.abs(MurmurHash.getInstance(MURMUR_HASH).hash(id.getBytes(), i) % m.get());
-            System.out.println(index);
-            BitSet tmp = getBitSet();
-            tmp.set(index, true);
-            setBitSet(tmp);
-        }
-        return true;
-    }
-
     public boolean find(String id) {
         int index;
         for(int i=0; i<k.get(); i++){
@@ -77,14 +63,6 @@ public class BloomFilter implements Writable {
                 return false;
         }
         return true;
-    }
-
-    public void or(BitSet next_bf) {
-        for (int i=0; i < m.get(); i++) {
-            BitSet tmp = getBitSet();
-            tmp.set(i, getBitSet().get(i) || next_bf.get(i));
-            setBitSet(tmp);
-        }
     }
 
     @Override
