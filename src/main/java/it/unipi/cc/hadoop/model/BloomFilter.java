@@ -4,7 +4,6 @@ import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.util.hash.MurmurHash;
-import org.apache.hadoop.yarn.webapp.hamlet2.Hamlet;
 
 import java.io.DataInput;
 import java.io.DataOutput;

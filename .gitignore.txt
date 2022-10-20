@@ -1,3 +1,4 @@
 out/
 target/
-/META-INF/
+META-INF/
+output/
