@@ -40,7 +40,7 @@ public class BloomFilterCreation {
             if(value.toString().startsWith("tconst"))
                     return;
             String[] tokens = value.toString().split("\t"); //id (0) , rating (1)
-            int roundedRating = (int) Math.round(Double.parseDouble(tokens[1]))-1;
+            int roundedRating = (int) Math.round(Double.parseDouble(tokens[1]));
             System.out.println("RR:" + roundedRating);
             int m = Integer.parseInt(context.getConfiguration().get("filter_" + roundedRating + "_m"));
             System.out.println("M: " + m);
@@ -70,15 +70,17 @@ public class BloomFilterCreation {
         public void setup(Context context) {
 
             k = Integer.parseInt(context.getConfiguration().get("filter_k")); //need to define after
-
+            System.out.println("K:" + k);
         }
         public void reduce(IntWritable key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
+            System.out.println("REDUCE");
             int m = Integer.parseInt(context.getConfiguration().get("filter_" + key + "_m"));
             BitSet bitset = new BitSet(m);
             for(IntWritable i: values)
                 bitset.set(i.get());
             BloomFilter bloomfilter = new BloomFilter(k, m, bitset);
             context.write(key, bloomfilter);
+            System.out.println("REDUCE END");
         }
     }
 

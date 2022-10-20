@@ -36,7 +36,6 @@ public class Driver {
         conf.set("input.path", parameters.getInputPath());
         conf.set("output.path", parameters.getOutputPath());
         conf.setDouble("p", parameters.getP());
-        System.out.println(parameters.getNumReducers());
         conf.setInt("num_reducers", parameters.getNumReducers());
         conf.setInt("n_rates", parameters.getnRates());
 
