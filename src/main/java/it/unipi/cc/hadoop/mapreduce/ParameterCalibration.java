@@ -1,5 +1,6 @@
 package it.unipi.cc.hadoop.mapreduce;
 
+import it.unipi.cc.hadoop.Driver;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
@@ -21,6 +22,7 @@ public class ParameterCalibration {
 
         @Override
         public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
+            Driver.print("Parameter Calibration -> map");
             String record = value.toString();
             if (record == null || record.startsWith("tconst"))
                 return;
@@ -45,6 +47,7 @@ public class ParameterCalibration {
             p = context.getConfiguration().getDouble("p", 0.01);
         }
         public void reduce(IntWritable key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
+            System.out.println("Parameter Calibration -> reduce");
             int n = 0;
             while(values.iterator().hasNext())
                 n += values.iterator().next().get();

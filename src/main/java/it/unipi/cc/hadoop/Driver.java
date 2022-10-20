@@ -15,7 +15,9 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
+import org.apache.hadoop.util.GenericOptionsParser;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -25,38 +27,68 @@ import java.util.List;
 
 public class Driver {
 
-    static String configFile = "conf.properties";
+    // files for input and output
+    private static final String OUTPUT_FOLDER = "output/";
+    private static final String OUTPUT_CALIBRATE = "outStage1";
+    private static final String OUTPUT_CREATE = "outStage2";
+    private static final String OUTPUT_VALIDATE = "fp_rates";
+
+    // configuration variables
+    private static String INPUT;
+    private static int N_RATES;
+    private static int N_REDUCERS;
+    private static double P;
+    private static int N_LINES;
 
     public static void main(String[] args) throws IOException, InterruptedException, ClassNotFoundException {
 
         Configuration conf = new Configuration();
 
-        Parameters parameters = new Parameters(configFile);
+        String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
+        if(otherArgs.length != 5) {
+            print("Arguments required: <input> <n_rates> <n_reducers> <p> <n_lines>");
+            System.exit(-1);
+        }
 
-        String DIR = parameters.getOutputPath()+"/";
-        conf.set("input.path", parameters.getInputPath());
-        conf.set("output.path", parameters.getOutputPath());
-        conf.setDouble("p", parameters.getP());
-        conf.setInt("num_reducers", parameters.getNumReducers());
-        conf.setInt("n_rates", parameters.getnRates());
+        System.out.println("---------------------------------------");
+        System.out.println("Configuration variables\n");
+        System.out.println("---------------------------------------");
+        System.out.println("Input\t\t\t" + otherArgs[0]);
+        System.out.println("Number of rates:\t" + otherArgs[1]);
+        System.out.println("Number of reducers:\t" + otherArgs[2]);
+        System.out.println("P:\t\t\t" + otherArgs[3]);
+        System.out.println("Number of lines:\t\t" + otherArgs[4]);
+        System.out.println("---------------------------------------\n");
 
-        conf.set("output.parameter-calibration", DIR + "parameter-calibration");
-        conf.set("output.bloom-filters-creation", DIR + "bloom-filters-creation");
-        conf.set("output.parameter-validation", DIR + "parameter-validation");
+
+        INPUT = otherArgs[0];
+        N_RATES = Integer.parseInt(otherArgs[1]);
+        N_REDUCERS = Integer.parseInt(otherArgs[2]);
+        P = Double.parseDouble(otherArgs[3]);
+        N_LINES = Integer.parseInt(otherArgs[4]);
+        
+        //errors
+        if(P < 0 || P > 1 || N_RATES <= 0 || N_REDUCERS <= 0 || INPUT.equals("")) {
+            print("Configuration not valid: check the arguments passed.");
+            System.exit(-1);
+        }
 
         // Clean HDFS workspace
+        print("Clean HDFS workspace");
         FileSystem fs = FileSystem.get(conf);
-        if(fs.exists(new Path(DIR)))
-            fs.delete(new Path(DIR), true);
+        if(fs.exists(new Path(OUTPUT_FOLDER)))
+            fs.delete(new Path(OUTPUT_FOLDER), true);
 
+        print("Parameter calibration stage...");
+        // first stage
         if(!calibrateParams(conf)){
             fs.close();
             System.exit(-1);
         }
 
-        System.out.println("FASE 1 TERMINATA");
-        FileStatus[] status = fs.listStatus(new Path(DIR));
-        List<String> param = new ArrayList<String>();
+        print("FASE 1 TERMINATA");
+        FileStatus[] status = fs.listStatus(new Path(OUTPUT_FOLDER + OUTPUT_CALIBRATE));
+        List<String> param = new ArrayList<>();
 
         for(FileStatus filestatus : status) {
             BufferedReader br = new BufferedReader(new InputStreamReader(fs.open(filestatus.getPath())));
@@ -71,18 +103,21 @@ public class Driver {
 
         for(int i = 0; i < 10; i++) {
 
-
             String[] token = param.get(i).split(" ");
             if(i == 0)
                 conf.set("filter_k", token[1]);
             conf.set("filter_" + (i+1) + "_m", token[0]);
-            System.out.println(conf.get("filter_" + (i+1) + "_m"));
+            print(conf.get("filter_" + (i+1) + "_m"));
         }
 
+        print("Bloom filters creation stage...");
         if (!createBloomFilters(conf)) {
             fs.close();
             System.exit(-1);
         }
+
+        print("The End");
+
     }
 
     private static boolean calibrateParams(Configuration conf) throws IOException, InterruptedException, ClassNotFoundException {
@@ -100,8 +135,8 @@ public class Driver {
         // reducer's output key and output value
         job.setOutputKeyClass(IntWritable.class);
         job.setOutputValueClass(Text.class);
-        job.setNumReduceTasks(Integer.parseInt(conf.get("num_reducers")));
-        job.getConfiguration().setDouble("p", Double.parseDouble(conf.get("p")));
+        job.setNumReduceTasks(N_REDUCERS);
+        job.getConfiguration().setDouble("p", P);
 
         FileInputFormat.addInputPath(job, new Path(conf.get("input.path"))); //input file i.e. dataset.tsv
         FileOutputFormat.setOutputPath(job, new Path(conf.get("output.path"))); //output file
@@ -154,6 +189,12 @@ public class Driver {
         FileOutputFormat.setOutputPath(job, new Path(conf.get("output.parameter-validation")));
 
         return job.waitForCompletion(true);
+    }
+
+    public static void print(String s) {
+        System.out.println("\n---------------------------------------");
+        System.out.println(s);
+        System.out.println("---------------------------------------\n");
     }
 
 }

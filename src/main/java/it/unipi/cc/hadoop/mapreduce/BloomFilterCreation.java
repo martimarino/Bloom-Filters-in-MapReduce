@@ -29,8 +29,9 @@ public class BloomFilterCreation {
 
         //insert into bloomfilter corresponding to the calculated rating, the id of the film, for each film
         public void map(Object object, Text value, Context context) {
+            System.out.println("***\t BloomFilterCreation -> map");
 
-            System.out.println("MAP");
+            System.out.println("***\t MAP");
             if(value.toString().startsWith("tconst"))
                     return;
             String[] tokens = value.toString().split("\t"); //id (0) , rating (1)
@@ -49,9 +50,9 @@ public class BloomFilterCreation {
                 {
                     e.printStackTrace();
                 }
-                System.out.println("END");
+                System.out.println("***\t END");
             }
-            System.out.println("END MAP");
+            System.out.println("***\t END MAP");
         }
 
     }
@@ -67,7 +68,7 @@ public class BloomFilterCreation {
             System.out.println("K:" + k);
         }
         public void reduce(IntWritable key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
-            System.out.println("REDUCE");
+            System.out.println("BloomFilterCreation -> reduce");
             int m = Integer.parseInt(context.getConfiguration().get("filter_" + key + "_m"));
             BitSet bitset = new BitSet(m);
             for(IntWritable i: values)
