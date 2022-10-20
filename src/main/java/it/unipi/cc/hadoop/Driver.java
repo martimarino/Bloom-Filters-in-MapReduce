@@ -4,7 +4,7 @@ import it.unipi.cc.hadoop.mapreduce.BloomFilterCreation;
 import it.unipi.cc.hadoop.mapreduce.ParameterCalibration;
 import it.unipi.cc.hadoop.mapreduce.ParameterValidation;
 import it.unipi.cc.hadoop.model.BloomFilter;
-import it.unipi.cc.hadoop.model.Parameters;
+import org.apache.hadoop.mapreduce.lib.input.NLineInputFormat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -136,10 +136,13 @@ public class Driver {
         job.setNumReduceTasks(N_REDUCERS);
         job.getConfiguration().setDouble("p", P);
 
-        FileInputFormat.addInputPath(job, new Path(conf.get("input.path"))); //input file i.e. dataset.tsv
-        FileOutputFormat.setOutputPath(job, new Path(conf.get("output.path"))); //output file
+        NLineInputFormat.addInputPath(job, new Path(INPUT));
+        job.getConfiguration().setInt("mapreduce.input.lineinputformat.linespermap", N_LINES);
 
-        job.setInputFormatClass(TextInputFormat.class);
+        //FileInputFormat.addInputPath(job, new Path(conf.get("input.path"))); //input file i.e. dataset.tsv
+        FileOutputFormat.setOutputPath(job, new Path(OUTPUT_FOLDER+OUTPUT_CALIBRATE)); //output file
+
+        job.setInputFormatClass(NLineInputFormat.class);
         job.setOutputFormatClass(TextOutputFormat.class);
 
         return job.waitForCompletion(true);
@@ -161,8 +164,14 @@ public class Driver {
         job.setOutputKeyClass(IntWritable.class);
         job.setOutputValueClass(BloomFilter.class);
 
-        FileInputFormat.addInputPath(job, new Path(conf.get("input.path")));
-        FileOutputFormat.setOutputPath(job, new Path(conf.get("output.bloom-filters-creation")));
+        NLineInputFormat.addInputPath(job, new Path(INPUT));
+        job.getConfiguration().setInt("mapreduce.input.lineinputformat.linespermap", N_LINES);
+
+        job.setInputFormatClass(NLineInputFormat.class);
+        job.setOutputFormatClass(SequenceFileOutputFormat.class);
+
+        //FileInputFormat.addInputPath(job, new Path(conf.get("input.path")));
+        FileOutputFormat.setOutputPath(job, new Path(OUTPUT_FOLDER+OUTPUT_CREATE));
 
         return job.waitForCompletion(true);
     }
@@ -183,8 +192,11 @@ public class Driver {
         job.setOutputKeyClass(IntWritable.class);
         job.setOutputValueClass(BloomFilter.class);
 
-        FileInputFormat.addInputPath(job, new Path(conf.get("output.bloom-filters-creation")));
-        FileOutputFormat.setOutputPath(job, new Path(conf.get("output.parameter-validation")));
+        NLineInputFormat.addInputPath(job, new Path(INPUT));
+        job.getConfiguration().setInt("mapreduce.input.lineinputformat.linespermap", N_LINES);
+
+        //FileInputFormat.addInputPath(job, new Path(conf.get("output.bloom-filters-creation")));
+        FileOutputFormat.setOutputPath(job, new Path(OUTPUT_FOLDER+OUTPUT_VALIDATE));
 
         return job.waitForCompletion(true);
     }
