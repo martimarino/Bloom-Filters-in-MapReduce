@@ -29,8 +29,6 @@ public class ParameterValidation {
                 // prendere i filters da file
 
 
-
-
                 bloomFilters.set(i, new BloomFilter());
             }
         }
