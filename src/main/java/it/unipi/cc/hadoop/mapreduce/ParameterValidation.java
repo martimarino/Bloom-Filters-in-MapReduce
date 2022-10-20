@@ -14,11 +14,11 @@ public class ParameterValidation {
     private static final IntWritable outputVal = new IntWritable();
 
     public static class PVMapper extends Mapper<IntWritable, IntWritable, IntWritable, IntWritable>{
-        private int[] fp_counters;
+        private static int[] fp_counters;
         private final ArrayList<BloomFilter> bloomFilters = new ArrayList<>();
 
         @Override
-        public void setup(Context context) throws IOException, InterruptedException {
+        protected void setup(Context context) throws IOException, InterruptedException {
             super.setup(context);
             n_rates = context.getConfiguration().getInt("n_rates", 0);
             if(n_rates == 0)
@@ -46,7 +46,7 @@ public class ParameterValidation {
         }
 
         @Override
-        public void cleanup(Context context) throws IOException, InterruptedException {
+        protected void cleanup(Context context) throws IOException, InterruptedException {
             for(int i = 0; i < n_rates; i++) {
                 outputKey.set(i+1);
                 outputVal.set(fp_counters[i]);
@@ -67,7 +67,7 @@ public class ParameterValidation {
         }
 
         @Override
-        public void cleanup(Context context) throws IOException, InterruptedException {
+        protected void cleanup(Context context) throws IOException, InterruptedException {
             for (int i = 0; i < n_rates; i++){
                 outputKey.set(i+1);
                 outputVal.set(sum);

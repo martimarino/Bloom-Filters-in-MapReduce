@@ -41,6 +41,13 @@ public class BloomFilter implements Writable {
         this.k = k;
     }
 
+    public void setBitSet(BitSet b) {
+        byte[] arr = b.toByteArray();
+        bf = new BytesWritable();
+        bf.setSize(arr.length);
+        bf.set(arr, 0, arr.length);
+    }
+
     public BitSet getBitSet(){
         return BitSet.valueOf(bf.getBytes());
     }

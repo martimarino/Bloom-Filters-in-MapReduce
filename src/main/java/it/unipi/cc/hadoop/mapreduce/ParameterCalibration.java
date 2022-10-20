@@ -1,27 +1,30 @@
 package it.unipi.cc.hadoop.mapreduce;
 
 import it.unipi.cc.hadoop.Driver;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.IntWritable;
-
-import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
-import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
 import java.io.IOException;
 
 public class ParameterCalibration {
     public static class PCMapper extends Mapper<Object, Text, IntWritable, IntWritable> {
-        private int[] counter = new int[10];
+
+        private static int n_rates;
+        private static int[] counter;
+
+        private static final IntWritable outputKey = new IntWritable();
+        private static final IntWritable outputVal = new IntWritable();
 
         @Override
-        public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
+        protected void setup(Context context) {
+            n_rates = Integer.parseInt(context.getConfiguration().get("n_rates"));
+            counter = new int[n_rates];
+        }
+
+        @Override
+        public void map(Object key, Text value, Context context) {
             Driver.print("Parameter Calibration -> map");
             String record = value.toString();
             if (record == null || record.startsWith("tconst"))
@@ -33,9 +36,12 @@ public class ParameterCalibration {
         }
 
         @Override
-        public void cleanup(Context context) throws IOException, InterruptedException {
-            for(int i=0; i<counter.length; i++)
-                context.write(new IntWritable(i + 1), new IntWritable(counter[i])); //<key, value>
+        protected void cleanup(Context context) throws IOException, InterruptedException {
+            for(int i=0; i<n_rates; i++) {
+                outputKey.set(i + 1);
+                outputVal.set(counter[i]);
+                context.write(outputKey, outputVal);
+            }
         }
     }
 
@@ -43,9 +49,11 @@ public class ParameterCalibration {
 
         private static double p;
         @Override
-        public void setup(Context context) {
+        protected void setup(Context context) {
             p = context.getConfiguration().getDouble("p", 0.01);
         }
+
+        @Override
         public void reduce(IntWritable key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
             System.out.println("Parameter Calibration -> reduce");
             int n = 0;

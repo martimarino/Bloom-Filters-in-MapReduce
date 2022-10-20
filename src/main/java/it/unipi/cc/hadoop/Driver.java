@@ -61,10 +61,11 @@ public class Driver {
 
         INPUT = otherArgs[0];
         N_RATES = Integer.parseInt(otherArgs[1]);
+        conf.set("n_rates", otherArgs[1]);
         N_REDUCERS = Integer.parseInt(otherArgs[2]);
         P = Double.parseDouble(otherArgs[3]);
         N_LINES = Integer.parseInt(otherArgs[4]);
-        
+
         //errors
         if(P < 0 || P > 1 || N_RATES <= 0 || N_REDUCERS <= 0 || INPUT.equals("")) {
             print("Configuration not valid: check the arguments passed.");
@@ -99,7 +100,7 @@ public class Driver {
             br.close();
         }
 
-        for(int i = 0; i < 10; i++) {
+        for(int i = 0; i < N_RATES; i++) {
 
             String[] token = param.get(i).split(" ");
             if(i == 0)
@@ -139,7 +140,6 @@ public class Driver {
         NLineInputFormat.addInputPath(job, new Path(INPUT));
         job.getConfiguration().setInt("mapreduce.input.lineinputformat.linespermap", N_LINES);
 
-        //FileInputFormat.addInputPath(job, new Path(conf.get("input.path"))); //input file i.e. dataset.tsv
         FileOutputFormat.setOutputPath(job, new Path(OUTPUT_FOLDER+OUTPUT_CALIBRATE)); //output file
 
         job.setInputFormatClass(NLineInputFormat.class);
@@ -170,7 +170,6 @@ public class Driver {
         job.setInputFormatClass(NLineInputFormat.class);
         job.setOutputFormatClass(SequenceFileOutputFormat.class);
 
-        //FileInputFormat.addInputPath(job, new Path(conf.get("input.path")));
         FileOutputFormat.setOutputPath(job, new Path(OUTPUT_FOLDER+OUTPUT_CREATE));
 
         return job.waitForCompletion(true);
@@ -195,7 +194,6 @@ public class Driver {
         NLineInputFormat.addInputPath(job, new Path(INPUT));
         job.getConfiguration().setInt("mapreduce.input.lineinputformat.linespermap", N_LINES);
 
-        //FileInputFormat.addInputPath(job, new Path(conf.get("output.bloom-filters-creation")));
         FileOutputFormat.setOutputPath(job, new Path(OUTPUT_FOLDER+OUTPUT_VALIDATE));
 
         return job.waitForCompletion(true);
