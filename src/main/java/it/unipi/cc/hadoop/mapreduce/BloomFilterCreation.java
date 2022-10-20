@@ -1,20 +1,13 @@
 package it.unipi.cc.hadoop.mapreduce;
 
 import it.unipi.cc.hadoop.model.BloomFilter;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
-import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.util.GenericOptionsParser;
 import org.apache.hadoop.util.hash.MurmurHash;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.BitSet;
 
 import static org.apache.hadoop.util.hash.Hash.MURMUR_HASH;
@@ -33,8 +26,9 @@ public class BloomFilterCreation {
             k = Integer.parseInt(context.getConfiguration().get("filter_k")); //need to define after
 
         }
+
         //insert into bloomfilter corresponding to the calculated rating, the id of the film, for each film
-        public void map(Object object, Text value, Context context) throws IOException, InterruptedException {
+        public void map(Object object, Text value, Context context) {
 
             System.out.println("MAP");
             if(value.toString().startsWith("tconst"))
@@ -80,7 +74,6 @@ public class BloomFilterCreation {
                 bitset.set(i.get());
             BloomFilter bloomfilter = new BloomFilter(k, m, bitset);
             context.write(key, bloomfilter);
-            System.out.println("REDUCE END");
         }
     }
 

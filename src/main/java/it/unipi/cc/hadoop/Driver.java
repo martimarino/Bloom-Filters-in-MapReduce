@@ -25,12 +25,13 @@ import java.util.List;
 
 public class Driver {
 
+    static String configFile = "conf.properties";
+
     public static void main(String[] args) throws IOException, InterruptedException, ClassNotFoundException {
 
         Configuration conf = new Configuration();
 
-        String userDirectory = System.getProperty("user.dir");
-        Parameters parameters = new Parameters(userDirectory + "/conf.properties");
+        Parameters parameters = new Parameters(configFile);
 
         String DIR = parameters.getOutputPath()+"/";
         conf.set("input.path", parameters.getInputPath());
@@ -102,7 +103,7 @@ public class Driver {
         job.setNumReduceTasks(Integer.parseInt(conf.get("num_reducers")));
         job.getConfiguration().setDouble("p", Double.parseDouble(conf.get("p")));
 
-        FileInputFormat.addInputPath(job, new Path(conf.get("input.path"))); //input file that needs to be used by MapReduce program
+        FileInputFormat.addInputPath(job, new Path(conf.get("input.path"))); //input file i.e. dataset.tsv
         FileOutputFormat.setOutputPath(job, new Path(conf.get("output.path"))); //output file
 
         job.setInputFormatClass(TextInputFormat.class);
