@@ -1,8 +1,9 @@
 package it.unipi.cc.hadoop;
 
 import it.unipi.cc.hadoop.mapreduce.BloomFilterCreation;
+import it.unipi.cc.hadoop.mapreduce.BloomFilterFPR;
 import it.unipi.cc.hadoop.mapreduce.ParameterCalibration;
-import it.unipi.cc.hadoop.mapreduce.ParameterValidation;
+import it.unipi.cc.hadoop.mapreduce.BloomFilterFPR;
 import it.unipi.cc.hadoop.model.BloomFilter;
 import org.apache.hadoop.mapreduce.lib.input.NLineInputFormat;
 import org.apache.hadoop.conf.Configuration;
@@ -42,11 +43,12 @@ public class Driver {
 
         Configuration conf = new Configuration();
 
-        String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
+/*        String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
         if(otherArgs.length != 5) {
             print("Arguments required: <input> <n_rates> <n_reducers> <p> <n_lines>");
             System.exit(-1);
-        }
+        }*/
+        String[] otherArgs = {"dataset.tsv", "10", "1", "0.01", "800000"};
 
         System.out.println("---------------------------------------");
         System.out.println("Configuration variables\n");
@@ -106,11 +108,18 @@ public class Driver {
             if(i == 0)
                 conf.set("filter_k", token[1]);
             conf.set("filter_" + (i+1) + "_m", token[0]);
-            print(conf.get("filter_" + (i+1) + "_m"));
+            //print(conf.get("filter_" + (i+1) + "_m"));
         }
 
         print("Bloom filters creation stage...");
         if (!createBloomFilters(conf)) {
+            fs.close();
+            System.exit(-1);
+        }
+        print("FASE 2 TERMINATA");
+
+        print("FPR computation stage...");
+        if (!computeFPR(conf)) {
             fs.close();
             System.exit(-1);
         }
@@ -175,13 +184,13 @@ public class Driver {
         return job.waitForCompletion(true);
     }
 
-    private static boolean validateParams(Configuration conf) throws IOException, InterruptedException, ClassNotFoundException {
+    private static boolean computeFPR(Configuration conf) throws IOException, InterruptedException, ClassNotFoundException {
 
         Job job = Job.getInstance(conf, "validate");
-        job.setJarByClass(ParameterValidation.class);
+        job.setJarByClass(BloomFilterFPR.class);
 
-        job.setMapperClass(ParameterValidation.PVMapper.class);
-        job.setReducerClass(ParameterValidation.PVReducer.class);
+        job.setMapperClass(BloomFilterFPR.FPRMapper.class);
+        job.setReducerClass(BloomFilterFPR.FPRReducer.class);
 
         // mapper's output key and output value
         job.setMapOutputKeyClass(IntWritable.class);

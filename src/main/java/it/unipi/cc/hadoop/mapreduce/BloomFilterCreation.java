@@ -4,6 +4,7 @@ import it.unipi.cc.hadoop.Driver;
 import it.unipi.cc.hadoop.model.BloomFilter;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.util.hash.MurmurHash;
@@ -30,49 +31,45 @@ public class BloomFilterCreation {
         //insert into bloom filter corresponding to the calculated rating, the id of the film, for each film
         @Override
         public void map(Object object, Text value, Context context) throws IOException, InterruptedException {
-            Driver.print("BloomFilterCreation -> map");
 
-            Driver.print("MAP");
             if(value.toString().startsWith("tconst"))
                     return;
             String[] tokens = value.toString().split("\t"); //id (0) , rating (1)
             int roundedRating = (int) Math.round(Double.parseDouble(tokens[1]));
-            Driver.print("RR:" + roundedRating);
             int m = Integer.parseInt(context.getConfiguration().get("filter_" + roundedRating + "_m"));
-            Driver.print("M: " + m);
+
             for(int i = 0; i < k; i++) {
                 int index = Math.abs(MurmurHash.getInstance(MURMUR_HASH).hash(tokens[0].getBytes(), i) % m);
 
                 outputKey.set(roundedRating);
                 outputValue.set(index);
                 context.write(outputKey, outputValue);
-                Driver.print("END");
             }
-            Driver.print("END MAP");
         }
-
     }
 
-
     public static class BFCReducer extends Reducer<IntWritable, IntWritable, IntWritable, BloomFilter> { //<rating, bloom filters, rating, bloomfilter
+        private static MultipleOutputs mos;
         private static int k;
 
         //for all the bloom filter received, doing the or
         @Override
         protected void setup(Context context) {
-
+            mos = new MultipleOutputs(context);
             k = Integer.parseInt(context.getConfiguration().get("filter_k")); //need to define after
-            System.out.println("K:" + k);
         }
         @Override
         public void reduce(IntWritable key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
-            System.out.println("BloomFilterCreation -> reduce");
             int m = Integer.parseInt(context.getConfiguration().get("filter_" + key + "_m"));
             BitSet bitset = new BitSet(m);
             for(IntWritable i: values)
                 bitset.set(i.get());
             BloomFilter bloomfilter = new BloomFilter(k, m, bitset);
-            context.write(key, bloomfilter);
+            mos.write(key, bloomfilter, "rate"+key);
+        }
+        @Override
+        protected void cleanup(Context context) throws IOException, InterruptedException {
+            mos.close();
         }
     }
 
