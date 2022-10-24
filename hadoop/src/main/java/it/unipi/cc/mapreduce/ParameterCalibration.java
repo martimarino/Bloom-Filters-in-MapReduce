@@ -1,6 +1,5 @@
-package it.unipi.cc.hadoop.mapreduce;
+package it.unipi.cc.mapreduce;
 
-import it.unipi.cc.hadoop.Driver;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;

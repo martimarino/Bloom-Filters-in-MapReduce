@@ -1,6 +1,6 @@
-package it.unipi.cc.hadoop.mapreduce;
+package it.unipi.cc.mapreduce;
 
-import it.unipi.cc.hadoop.model.BloomFilter;
+import it.unipi.cc.model.BloomFilter;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;

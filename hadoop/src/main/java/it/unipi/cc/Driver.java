@@ -1,11 +1,9 @@
-package it.unipi.cc.hadoop;
+package it.unipi.cc;
 
-import it.unipi.cc.hadoop.mapreduce.BloomFilterCreation;
-import it.unipi.cc.hadoop.mapreduce.BloomFilterFPR;
-import it.unipi.cc.hadoop.mapreduce.ParameterCalibration;
-import it.unipi.cc.hadoop.mapreduce.BloomFilterFPR;
-import it.unipi.cc.hadoop.model.BloomFilter;
-import org.apache.hadoop.io.DoubleWritable;
+import it.unipi.cc.mapreduce.BloomFilterCreation;
+import it.unipi.cc.mapreduce.BloomFilterFPR;
+import it.unipi.cc.mapreduce.ParameterCalibration;
+import it.unipi.cc.model.BloomFilter;
 import org.apache.hadoop.mapreduce.lib.input.NLineInputFormat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
@@ -17,7 +15,6 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
-import org.apache.hadoop.util.GenericOptionsParser;
 
 import java.io.BufferedReader;
 import java.io.IOException;

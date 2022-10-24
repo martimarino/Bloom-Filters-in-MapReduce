@@ -1,4 +1,4 @@
-package it.unipi.cc.hadoop.model;
+package it.unipi.cc.model;
 
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.IntWritable;
