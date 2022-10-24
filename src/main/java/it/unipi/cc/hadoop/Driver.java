@@ -5,6 +5,7 @@ import it.unipi.cc.hadoop.mapreduce.BloomFilterFPR;
 import it.unipi.cc.hadoop.mapreduce.ParameterCalibration;
 import it.unipi.cc.hadoop.mapreduce.BloomFilterFPR;
 import it.unipi.cc.hadoop.model.BloomFilter;
+import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.mapreduce.lib.input.NLineInputFormat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
@@ -30,7 +31,7 @@ public class Driver {
     private static final String OUTPUT_FOLDER = "output/";
     private static final String OUTPUT_CALIBRATE = "outStage1";
     private static final String OUTPUT_CREATE = "outStage2";
-    private static final String OUTPUT_VALIDATE = "fp_rates";
+    private static final String OUTPUT_FPR = "fp_rates";
 
     // configuration variables
     private static String INPUT;
@@ -86,8 +87,8 @@ public class Driver {
             fs.close();
             System.exit(-1);
         }
-
         print("FASE 1 TERMINATA");
+
         FileStatus[] status = fs.listStatus(new Path(OUTPUT_FOLDER + OUTPUT_CALIBRATE));
         List<String> param = new ArrayList<>();
 
@@ -103,12 +104,10 @@ public class Driver {
         }
 
         for(int i = 0; i < N_RATES; i++) {
-
             String[] token = param.get(i).split(" ");
             if(i == 0)
                 conf.set("filter_k", token[1]);
             conf.set("filter_" + (i+1) + "_m", token[0]);
-            //print(conf.get("filter_" + (i+1) + "_m"));
         }
 
         print("Bloom filters creation stage...");
@@ -119,6 +118,7 @@ public class Driver {
         print("FASE 2 TERMINATA");
 
         print("FPR computation stage...");
+        conf.set("outStage2", OUTPUT_FOLDER+OUTPUT_CREATE);
         if (!computeFPR(conf)) {
             fs.close();
             System.exit(-1);
@@ -186,7 +186,7 @@ public class Driver {
 
     private static boolean computeFPR(Configuration conf) throws IOException, InterruptedException, ClassNotFoundException {
 
-        Job job = Job.getInstance(conf, "validate");
+        Job job = Job.getInstance(conf, "fpr");
         job.setJarByClass(BloomFilterFPR.class);
 
         job.setMapperClass(BloomFilterFPR.FPRMapper.class);
@@ -194,16 +194,16 @@ public class Driver {
 
         // mapper's output key and output value
         job.setMapOutputKeyClass(IntWritable.class);
-        job.setMapOutputValueClass(BloomFilter.class);
+        job.setMapOutputValueClass(IntWritable.class);
 
         // reducer's output key and output value
         job.setOutputKeyClass(IntWritable.class);
-        job.setOutputValueClass(BloomFilter.class);
+        job.setOutputValueClass(IntWritable.class);
 
         NLineInputFormat.addInputPath(job, new Path(INPUT));
         job.getConfiguration().setInt("mapreduce.input.lineinputformat.linespermap", N_LINES);
 
-        FileOutputFormat.setOutputPath(job, new Path(OUTPUT_FOLDER+OUTPUT_VALIDATE));
+        FileOutputFormat.setOutputPath(job, new Path(OUTPUT_FOLDER+OUTPUT_FPR));
 
         return job.waitForCompletion(true);
     }

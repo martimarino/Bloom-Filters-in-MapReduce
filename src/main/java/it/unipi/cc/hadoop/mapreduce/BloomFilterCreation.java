@@ -1,6 +1,5 @@
 package it.unipi.cc.hadoop.mapreduce;
 
-import it.unipi.cc.hadoop.Driver;
 import it.unipi.cc.hadoop.model.BloomFilter;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
@@ -30,7 +29,7 @@ public class BloomFilterCreation {
 
         //insert into bloom filter corresponding to the calculated rating, the id of the film, for each film
         @Override
-        public void map(Object object, Text value, Context context) throws IOException, InterruptedException {
+        public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
 
             if(value.toString().startsWith("tconst"))
                     return;
