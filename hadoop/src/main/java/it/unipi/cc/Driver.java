@@ -4,6 +4,8 @@ import it.unipi.cc.mapreduce.BloomFilterCreation;
 import it.unipi.cc.mapreduce.BloomFilterFPR;
 import it.unipi.cc.mapreduce.ParameterCalibration;
 import it.unipi.cc.model.BloomFilter;
+import it.unipi.cc.model.IntArrayWritable;
+import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.mapreduce.lib.input.NLineInputFormat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
@@ -37,6 +39,7 @@ public class Driver {
     private static double P;
     private static int N_LINES;
 
+
     public static void main(String[] args) throws IOException, InterruptedException, ClassNotFoundException {
 
         Configuration conf = new Configuration();
@@ -51,11 +54,11 @@ public class Driver {
         System.out.println("---------------------------------------");
         System.out.println("Configuration variables\n");
         System.out.println("---------------------------------------");
-        System.out.println("Input\t\t\t" + otherArgs[0]);
+        System.out.println("Input\t\t\t\t" + otherArgs[0]);
         System.out.println("Number of rates:\t" + otherArgs[1]);
         System.out.println("Number of reducers:\t" + otherArgs[2]);
-        System.out.println("P:\t\t\t" + otherArgs[3]);
-        System.out.println("Number of lines:\t\t" + otherArgs[4]);
+        System.out.println("P:\t\t\t\t\t" + otherArgs[3]);
+        System.out.println("Number of lines:\t" + otherArgs[4]);
         System.out.println("---------------------------------------\n");
 
 
@@ -84,27 +87,34 @@ public class Driver {
             fs.close();
             System.exit(-1);
         }
-        print("FASE 1 TERMINATA");
+        print("Parameters correctly calibrated!");
 
         FileStatus[] status = fs.listStatus(new Path(OUTPUT_FOLDER + OUTPUT_CALIBRATE));
-        List<String> param = new ArrayList<>();
+        int[] param = new int[2];
 
         for(FileStatus filestatus : status) {
-            BufferedReader br = new BufferedReader(new InputStreamReader(fs.open(filestatus.getPath())));
-            for(String line = br.readLine(); line != null; line = br.readLine()) {
-                String[] sp = line.split("\t");
-                int m = Integer.parseInt(sp[1]);
-                int k = Integer.parseInt(sp[2]);
-                param.add(m + " " + k);
+            String f = String.valueOf(filestatus.getPath());
+            if(f.contains("SUCCESS"))
+                continue;
+            IntWritable key = new IntWritable();
+            IntArrayWritable value = new IntArrayWritable();
+            try (SequenceFile.Reader reader = new SequenceFile.Reader(conf, SequenceFile.Reader.file(filestatus.getPath()))) {
+                while (reader.next(key, value)) {
+                    IntWritable mWritable = (IntWritable) value.get()[0];
+                    IntWritable kWritable = (IntWritable) value.get()[1];
+                    param[0] = mWritable.get();
+                    param[1] = kWritable.get();
+//                    Driver.print(String.valueOf(param[0]));
+//                    Driver.print(String.valueOf(param[1]));
+                }
             }
-            br.close();
         }
 
+
         for(int i = 0; i < N_RATES; i++) {
-            String[] token = param.get(i).split(" ");
             if(i == 0)
-                conf.set("filter_k", token[1]);
-            conf.set("filter_" + (i+1) + "_m", token[0]);
+                conf.set("filter_k", String.valueOf(param[1]));
+            conf.set("filter_" + (i+1) + "_m", String.valueOf(param[0]));
         }
 
         print("Bloom filters creation stage...");
@@ -112,7 +122,7 @@ public class Driver {
             fs.close();
             System.exit(-1);
         }
-        print("FASE 2 TERMINATA");
+        print("BloomFilters correctly created!");
 
         print("FPR computation stage...");
         conf.set("outStage2", OUTPUT_FOLDER+OUTPUT_CREATE);
@@ -139,7 +149,7 @@ public class Driver {
 
         // reducer's output key and output value
         job.setOutputKeyClass(IntWritable.class);
-        job.setOutputValueClass(Text.class);
+        job.setOutputValueClass(IntArrayWritable.class);
         job.setNumReduceTasks(N_REDUCERS);
         job.getConfiguration().setDouble("p", P);
 
@@ -149,7 +159,7 @@ public class Driver {
         FileOutputFormat.setOutputPath(job, new Path(OUTPUT_FOLDER+OUTPUT_CALIBRATE)); //output file
 
         job.setInputFormatClass(NLineInputFormat.class);
-        job.setOutputFormatClass(TextOutputFormat.class);
+        job.setOutputFormatClass(SequenceFileOutputFormat.class);
 
         return job.waitForCompletion(true);
     }
@@ -164,7 +174,7 @@ public class Driver {
 
         // mapper's output key and output value
         job.setMapOutputKeyClass(IntWritable.class);
-        job.setMapOutputValueClass(IntWritable.class);
+        job.setMapOutputValueClass(IntArrayWritable.class);
 
         // reducer's output key and output value
         job.setOutputKeyClass(IntWritable.class);

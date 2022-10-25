@@ -1,5 +1,7 @@
 package it.unipi.cc.mapreduce;
 
+import it.unipi.cc.Driver;
+import it.unipi.cc.model.IntArrayWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -43,12 +45,17 @@ public class ParameterCalibration {
         }
     }
 
-    public static class PCReducer extends Reducer<IntWritable, IntWritable, IntWritable, Text> {
+    public static class PCReducer extends Reducer<IntWritable, IntWritable, IntWritable, IntArrayWritable> {
 
         private static double p;
+        private static IntWritable[] arr;    // for m and k
+        private static final IntArrayWritable params = new IntArrayWritable();
+
         @Override
         protected void setup(Context context) {
+
             p = context.getConfiguration().getDouble("p", 0.01);
+            arr = new IntWritable[2];
         }
 
         @Override
@@ -60,8 +67,11 @@ public class ParameterCalibration {
             int m = (int) (- (n * Math.log(p)) / (Math.pow(Math.log(2),2)));
             int k = (int) ((m/n) * Math.log(2));
 
-            Text value = new Text(m + "\t" + k);
-            context.write(key, value);
+            arr[0] = new IntWritable(m);
+            arr[1] = new IntWritable(k);
+            params.set(arr);
+//            Driver.print(String.valueOf(params));
+            context.write(key, params);
         }
     }
 
