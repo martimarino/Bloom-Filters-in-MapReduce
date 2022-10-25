@@ -210,6 +210,9 @@ public class Driver {
         NLineInputFormat.addInputPath(job, new Path(INPUT));
         job.getConfiguration().setInt("mapreduce.input.lineinputformat.linespermap", N_LINES);
 
+        job.setInputFormatClass(NLineInputFormat.class);
+        job.setOutputFormatClass(SequenceFileOutputFormat.class);
+
         FileOutputFormat.setOutputPath(job, new Path(OUTPUT_FOLDER+OUTPUT_FPR));
 
         return job.waitForCompletion(true);

@@ -1,6 +1,7 @@
-package it.unipi.cc.mapreduce;
+package it.unipi.cc.hadoop.mapreduce;
 
-import it.unipi.cc.model.BloomFilter;
+import it.unipi.cc.hadoop.Driver;
+import it.unipi.cc.hadoop.model.BloomFilter;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -16,8 +17,8 @@ import java.util.ArrayList;
 public class BloomFilterFPR {
     private static int n_rates;
     private static final IntWritable outputKey = new IntWritable();
-    private static final IntWritable outputVal = new IntWritable();
-    //private static int[] d_counters;
+    private static final IntWritable outputValue = new IntWritable();
+    private static int[] d_counters;
 
     public static class FPRMapper extends Mapper<Object, Text, IntWritable, IntWritable>{
         private static int[] fp_counters;
@@ -31,7 +32,8 @@ public class BloomFilterFPR {
                 System.exit(-1);
 
             fp_counters = new int[n_rates];
-            //d_counters = new int[n_rates];
+            d_counters = new int[n_rates];
+
             for(int i=0; i<n_rates; i++)
                 bloomFilters.add(new BloomFilter());
 
@@ -56,6 +58,7 @@ public class BloomFilterFPR {
 
         @Override
         public void map(Object key, Text value, Context context) {
+
             String record = value.toString();
             if (record == null || record.startsWith("tconst"))
                 return;
@@ -66,9 +69,11 @@ public class BloomFilterFPR {
                 if (roundedRating == i)
                     continue;
 
-                //d_counters[i]++;
+                d_counters[i]++;
+
                 if (bloomFilters.get(i).find(tokens[0]))
                     fp_counters[i]++;
+
             }
         }
 
@@ -76,32 +81,29 @@ public class BloomFilterFPR {
         protected void cleanup(Context context) throws IOException, InterruptedException {
             for(int i = 0; i < n_rates; i++) {
                 outputKey.set(i+1);
-                outputKey.set(fp_counters[i]);
-                context.write(outputKey, outputVal);
+                outputValue.set(fp_counters[i]);
+                context.write(outputKey, outputValue);
             }
         }
     }
 
     public static class FPRReducer extends Reducer<IntWritable, IntWritable, IntWritable, IntWritable> {
-        private final int[] counter = new int[n_rates];
+        private static int counter = 0;
 
         // rate and mappers count in input
         @Override
-        public void reduce(IntWritable key, Iterable<IntWritable> mapper_counts, Context context) {
-            for (IntWritable value : mapper_counts)
-                counter[key.get()-1] += value.get();
-        }
+        public void reduce(IntWritable key, Iterable<IntWritable> mapper_counts, Context context) throws IOException, InterruptedException {
 
-        @Override
-        protected void cleanup(Context context) throws IOException, InterruptedException {
-            for (int i = 0; i < n_rates; i++){
-                outputKey.set(i+1);
-                outputVal.set(counter[i]);
-                //System.out.println("Rate\t\tFP\t\tCount\t\tFPR");
-                //System.out.println("--------------------------------------------------------------------------------");
-                //System.out.println(outputKey+"\t\t\t"+counter[i]+"\t\t\t"+d_counters[i]+"\t\t\t"+(counter[i]/d_counters[i]));
-                context.write(outputKey, outputVal);
-            }
+            counter = 0;
+
+            for (IntWritable value : mapper_counts)
+                counter += value.get();
+
+            Driver.print("RATE: " + key.get() + " COUNTER: " + counter + " FPR: " + (double)counter/ (double)(d_counters[key.get()-1]) );
+
+            outputKey.set(key.get());
+            outputValue.set(counter);
+            context.write(outputKey, outputValue); //write rate and number of fp
         }
     }
 

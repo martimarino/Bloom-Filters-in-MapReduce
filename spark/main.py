@@ -10,7 +10,6 @@ findspark.init()
 from pyspark import SparkConf, SparkContext
 from pyspark.sql import SparkSession
 
-
 def compute_m(count, p):
     return math.ceil(-((count * math.log(p)) / math.pow(math.log(2), 2)))
 
