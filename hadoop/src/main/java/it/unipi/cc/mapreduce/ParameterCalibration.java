@@ -79,16 +79,16 @@ public class ParameterCalibration {
             context.write(key, params);
 
             //ESECUZIONE IN LOCALE
-//            try {
-//                BufferedWriter out = new BufferedWriter(new FileWriter("nmk.txt", true));
-//                out.write("RATE " + key.get() + "\tn: " + n + "\tm: " + m + "\tk: " + k + "\n");
-//                out.close();
-//            } catch (IOException e) {
-//                System.out.println("exception occurred" + e);
-//            }
+            try {
+                BufferedWriter out = new BufferedWriter(new FileWriter("nmk.txt", true));
+                out.write("RATE " + key.get() + "\tn: " + n + "\tm: " + m + "\tk: " + k + "\n");
+                out.close();
+            } catch (IOException e) {
+                System.out.println("exception occurred" + e);
+            }
 
             //ESECUZIONE SU CLUSTER
-            FileSystem fs = FileSystem.get(context.getConfiguration());
+          /*  FileSystem fs = FileSystem.get(context.getConfiguration());
             Path filenamePath = new Path("nmk.txt");
             try {
                 if (fs.exists(filenamePath)) {
@@ -99,7 +99,7 @@ public class ParameterCalibration {
                 fin.close();
             } catch (Exception e){
                 e.printStackTrace();
-            }
+            }*/
 
         }
     }

@@ -1,5 +1,6 @@
 package it.unipi.cc.mapreduce;
 
+import it.unipi.cc.Driver;
 import it.unipi.cc.model.BloomFilter;
 import it.unipi.cc.model.IntArrayWritable;
 import org.apache.hadoop.io.IntWritable;
@@ -45,6 +46,8 @@ public class BloomFilterCreation {
             String[] tokens = value.toString().split("\t"); //id (0) , rating (1)
             roundedRating = (int) Math.round(Double.parseDouble(tokens[1]));
             int m = Integer.parseInt(context.getConfiguration().get("filter_" + roundedRating + "_m"));
+
+            Driver.print("M: " + m + "RATE: " + roundedRating);
 
             for(int i = 0; i < k; i++)
                 indices[i] = new IntWritable(Math.abs(MurmurHash.getInstance(MURMUR_HASH).hash(tokens[0].getBytes(), i) % m));

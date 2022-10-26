@@ -105,16 +105,12 @@ public class Driver {
                     IntWritable kWritable = (IntWritable) value.get()[1];
                     params[0] = mWritable.get();
                     params[1] = kWritable.get();
+                    conf.set("filter_k", String.valueOf(params[1]));
+                    conf.set("filter_" + key.get()+ "_m", String.valueOf(params[0]));
+
                     Driver.print("Rate - " + key + "\tm: " + params[0] + ", k: " + params[1]);
                 }
             }
-        }
-
-
-        for(int i = 0; i < N_RATES; i++) {
-            if(i == 0)
-                conf.set("filter_k", String.valueOf(params[1]));
-            conf.set("filter_" + (i+1) + "_m", String.valueOf(params[0]));
         }
 
         print("Bloom filters creation stage...");

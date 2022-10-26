@@ -5,3 +5,5 @@
 /hadoop/target/
 dataset.tsv
 *.txt
+/output
+/out
