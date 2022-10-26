@@ -1,5 +1,0 @@
-out/
-target/
-META-INF/
-output/
-dataset.tsv
