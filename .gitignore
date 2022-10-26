@@ -1,1 +1,7 @@
 /hadoop/.idea/
+/hadoop/META-INF/
+/hadoop/out/
+/hadoop/output/
+/hadoop/target/
+dataset.tsv
+*.txt
