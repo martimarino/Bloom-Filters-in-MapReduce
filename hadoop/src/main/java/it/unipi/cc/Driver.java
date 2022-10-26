@@ -45,12 +45,11 @@ public class Driver {
 
         Configuration conf = new Configuration();
 
-/*        String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
+        String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
         if(otherArgs.length != 5) {
             print("Arguments required: <input> <n_rates> <n_reducers> <p> <n_lines>");
             System.exit(-1);
-        }*/
-        String[] otherArgs = {"dataset.tsv", "10", "1", "0.01", "500000"};
+        }
 
 
         System.out.println("---------------------------------------");

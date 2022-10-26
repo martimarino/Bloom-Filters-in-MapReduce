@@ -41,7 +41,7 @@ public class BloomFilterCreation {
         public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
 
             if(value.toString().startsWith("tconst"))
-                    return;
+                return;
             String[] tokens = value.toString().split("\t"); //id (0) , rating (1)
             roundedRating = (int) Math.round(Double.parseDouble(tokens[1]));
             int m = Integer.parseInt(context.getConfiguration().get("filter_" + roundedRating + "_m"));
@@ -77,14 +77,6 @@ public class BloomFilterCreation {
             }
             BloomFilter bloomfilter = new BloomFilter(k, m, bitset);
             mos.write(key, bloomfilter, "rate"+key);
-
-//            try {
-//                BufferedWriter out = new BufferedWriter(new FileWriter("bf.txt", true));
-//                out.write("KEY " + key.get() + "\tbitset: " + bitset.toString() + "\n");
-//                out.close();
-//            } catch (IOException e) {
-//                System.out.println("exception occurred" + e);
-//            }
 
         }
         @Override

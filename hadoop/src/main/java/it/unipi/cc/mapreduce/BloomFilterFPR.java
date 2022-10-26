@@ -105,30 +105,31 @@ public class BloomFilterFPR {
             double fpr;
             if(d_counters[key.get()-1] == 0)
                 fpr = 0;
-            fpr = (double)counter/ (double)(d_counters[key.get()-1]);
+            else
+                fpr = (double)counter/ (double)(d_counters[key.get()-1]);
 
             //ESECUZIONE IN LOCALE
-            try {
-                BufferedWriter out = new BufferedWriter(new FileWriter("fpr.txt", true));
-                out.write("RATE " + key.get() + "\tCOUNTER: " + counter + "\tFPR: " +  fpr + "\n");
-                out.close();
-            } catch (IOException e) {
-                System.out.println("exception occurred" + e);
-            }
+//            try {
+//                BufferedWriter out = new BufferedWriter(new FileWriter("fpr.txt", true));
+//                out.write("RATE " + key.get() + "\tCOUNTER: " + counter + "\tFPR: " +  fpr + "\n");
+//                out.close();
+//            } catch (IOException e) {
+//                System.out.println("exception occurred" + e);
+//            }
 
             //ESECUZIONE SU CLUSTER
-//            FileSystem fs = FileSystem.get(context.getConfiguration());
-//            Path filenamePath = new Path("FPR.txt");
-//            try {
-//                if (fs.exists(filenamePath)) {
-//                    fs.delete(filenamePath, true);
-//                }
-//                FSDataOutputStream fin = fs.create(filenamePath);
-//                fin.writeUTF("RATE " + key.get() + "\tCOUNTER: " + counter + "\tFPR: " +  fpr + "\n");
-//                fin.close();
-//            } catch (Exception e){
-//                e.printStackTrace();
-//            }
+            FileSystem fs = FileSystem.get(context.getConfiguration());
+            Path filenamePath = new Path("FPR.txt");
+            try {
+                if (fs.exists(filenamePath)) {
+                    fs.delete(filenamePath, true);
+                }
+                FSDataOutputStream fin = fs.create(filenamePath);
+                fin.writeUTF("RATE " + key.get() + "\tCOUNTER: " + counter + "\t\tFPR: " +  fpr + "\n");
+                fin.close();
+            } catch (Exception e){
+                e.printStackTrace();
+            }
 
             outputKey.set(key.get());
             outputValue.set(counter);
