@@ -11,6 +11,8 @@ import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 import org.apache.hadoop.util.hash.MurmurHash;
 
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.BitSet;
 
@@ -75,6 +77,15 @@ public class BloomFilterCreation {
             }
             BloomFilter bloomfilter = new BloomFilter(k, m, bitset);
             mos.write(key, bloomfilter, "rate"+key);
+
+//            try {
+//                BufferedWriter out = new BufferedWriter(new FileWriter("bf.txt", true));
+//                out.write("KEY " + key.get() + "\tbitset: " + bitset.toString() + "\n");
+//                out.close();
+//            } catch (IOException e) {
+//                System.out.println("exception occurred" + e);
+//            }
+
         }
         @Override
         protected void cleanup(Context context) throws IOException, InterruptedException {

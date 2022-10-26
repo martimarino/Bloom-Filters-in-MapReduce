@@ -1,7 +1,8 @@
-package it.unipi.cc.hadoop.mapreduce;
+package it.unipi.cc.mapreduce;
 
-import it.unipi.cc.hadoop.Driver;
-import it.unipi.cc.hadoop.model.BloomFilter;
+import it.unipi.cc.Driver;
+import it.unipi.cc.model.BloomFilter;
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -11,6 +12,8 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -88,7 +91,7 @@ public class BloomFilterFPR {
     }
 
     public static class FPRReducer extends Reducer<IntWritable, IntWritable, IntWritable, IntWritable> {
-        private static int counter = 0;
+        private static int counter;
 
         // rate and mappers count in input
         @Override
@@ -99,7 +102,33 @@ public class BloomFilterFPR {
             for (IntWritable value : mapper_counts)
                 counter += value.get();
 
-            Driver.print("RATE: " + key.get() + " COUNTER: " + counter + " FPR: " + (double)counter/ (double)(d_counters[key.get()-1]) );
+            double fpr;
+            if(d_counters[key.get()-1] == 0)
+                fpr = 0;
+            fpr = (double)counter/ (double)(d_counters[key.get()-1]);
+
+            //ESECUZIONE IN LOCALE
+//            try {
+//                BufferedWriter out = new BufferedWriter(new FileWriter("fpr.txt", true));
+//                out.write("RATE " + key.get() + "\tCOUNTER: " + counter + "\tFPR: " +  fpr + "\n");
+//                out.close();
+//            } catch (IOException e) {
+//                System.out.println("exception occurred" + e);
+//            }
+
+            //ESECUZIONE SU CLUSTER
+            FileSystem fs = FileSystem.get(context.getConfiguration());
+            Path filenamePath = new Path("FPR.txt");
+            try {
+                if (fs.exists(filenamePath)) {
+                    fs.delete(filenamePath, true);
+                }
+                FSDataOutputStream fin = fs.create(filenamePath);
+                fin.writeUTF("RATE " + key.get() + "\tCOUNTER: " + counter + "\tFPR: " +  fpr + "\n");
+                fin.close();
+            } catch (Exception e){
+                e.printStackTrace();
+            }
 
             outputKey.set(key.get());
             outputValue.set(counter);

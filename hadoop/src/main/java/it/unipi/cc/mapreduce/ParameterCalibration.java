@@ -2,12 +2,17 @@ package it.unipi.cc.mapreduce;
 
 import it.unipi.cc.Driver;
 import it.unipi.cc.model.IntArrayWritable;
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 
 public class ParameterCalibration {
     public static class PCMapper extends Mapper<Object, Text, IntWritable, IntWritable> {
@@ -70,8 +75,32 @@ public class ParameterCalibration {
             arr[0] = new IntWritable(m);
             arr[1] = new IntWritable(k);
             params.set(arr);
-//            Driver.print(String.valueOf(params));
+
             context.write(key, params);
+
+            //ESECUZIONE IN LOCALE
+//            try {
+//                BufferedWriter out = new BufferedWriter(new FileWriter("nmk.txt", true));
+//                out.write("RATE " + key.get() + "\tn: " + n + "\tm: " + m + "\tk: " + k + "\n");
+//                out.close();
+//            } catch (IOException e) {
+//                System.out.println("exception occurred" + e);
+//            }
+
+            //ESECUZIONE SU CLUSTER
+            FileSystem fs = FileSystem.get(context.getConfiguration());
+            Path filenamePath = new Path("nmk.txt");
+            try {
+                if (fs.exists(filenamePath)) {
+                    fs.delete(filenamePath, true);
+                }
+                FSDataOutputStream fin = fs.create(filenamePath);
+                fin.writeUTF("RATE " + key.get() + "\tn: " + n + "\tm: " + m + "\tk: " + k + "\n");
+                fin.close();
+            } catch (Exception e){
+                e.printStackTrace();
+            }
+
         }
     }
 

@@ -17,6 +17,7 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
+import org.apache.hadoop.util.GenericOptionsParser;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -44,12 +45,12 @@ public class Driver {
 
         Configuration conf = new Configuration();
 
-/*        String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
+        String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
         if(otherArgs.length != 5) {
             print("Arguments required: <input> <n_rates> <n_reducers> <p> <n_lines>");
             System.exit(-1);
-        }*/
-        String[] otherArgs = {"dataset.tsv", "10", "1", "0.01", "800000"};
+        }
+
 
         System.out.println("---------------------------------------");
         System.out.println("Configuration variables\n");
@@ -90,7 +91,7 @@ public class Driver {
         print("Parameters correctly calibrated!");
 
         FileStatus[] status = fs.listStatus(new Path(OUTPUT_FOLDER + OUTPUT_CALIBRATE));
-        int[] param = new int[2];
+        int[] params = new int[2];
 
         for(FileStatus filestatus : status) {
             String f = String.valueOf(filestatus.getPath());
@@ -102,10 +103,9 @@ public class Driver {
                 while (reader.next(key, value)) {
                     IntWritable mWritable = (IntWritable) value.get()[0];
                     IntWritable kWritable = (IntWritable) value.get()[1];
-                    param[0] = mWritable.get();
-                    param[1] = kWritable.get();
-//                    Driver.print(String.valueOf(param[0]));
-//                    Driver.print(String.valueOf(param[1]));
+                    params[0] = mWritable.get();
+                    params[1] = kWritable.get();
+                    Driver.print("Rate - " + key + "\tm: " + params[0] + ", k: " + params[1]);
                 }
             }
         }
@@ -113,8 +113,8 @@ public class Driver {
 
         for(int i = 0; i < N_RATES; i++) {
             if(i == 0)
-                conf.set("filter_k", String.valueOf(param[1]));
-            conf.set("filter_" + (i+1) + "_m", String.valueOf(param[0]));
+                conf.set("filter_k", String.valueOf(params[1]));
+            conf.set("filter_" + (i+1) + "_m", String.valueOf(params[0]));
         }
 
         print("Bloom filters creation stage...");
