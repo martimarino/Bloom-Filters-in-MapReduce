@@ -71,6 +71,8 @@ public class ParameterCalibration {
 
             int m = (int) (- (n * Math.log(p)) / (Math.pow(Math.log(2),2)));
             int k = (int) ((m/n) * Math.log(2));
+//            Driver.print("RATE " + key.get() + "\tn: " + n + "\tm: " + m + "\tk: " + k + "\n");
+
 
             arr[0] = new IntWritable(m);
             arr[1] = new IntWritable(k);
@@ -79,27 +81,27 @@ public class ParameterCalibration {
             context.write(key, params);
 
             //ESECUZIONE IN LOCALE
-            try {
-                BufferedWriter out = new BufferedWriter(new FileWriter("nmk.txt", true));
-                out.write("RATE " + key.get() + "\tn: " + n + "\tm: " + m + "\tk: " + k + "\n");
-                out.close();
-            } catch (IOException e) {
-                System.out.println("exception occurred" + e);
-            }
+//            try {
+//                BufferedWriter out = new BufferedWriter(new FileWriter("output/nmk.txt", true));
+//                out.write("RATE " + key.get() + "\tn: " + n + "\tm: " + m + "\tk: " + k + "\n");
+//                out.close();
+//            } catch (IOException e) {
+//                System.out.println("exception occurred" + e);
+//            }
 
             //ESECUZIONE SU CLUSTER
-          /*  FileSystem fs = FileSystem.get(context.getConfiguration());
-            Path filenamePath = new Path("nmk.txt");
+            FileSystem fs = FileSystem.get(context.getConfiguration());
+            Path filenamePath = new Path("output/nmk" + key.get() + ".txt");
             try {
-                if (fs.exists(filenamePath)) {
-                    fs.delete(filenamePath, true);
-                }
                 FSDataOutputStream fin = fs.create(filenamePath);
-                fin.writeUTF("RATE " + key.get() + "\tn: " + n + "\tm: " + m + "\tk: " + k + "\n");
+                fin.writeUTF("key " + key.get() + '\n');
+                fin.writeUTF("n: " + n + '\n');
+                fin.writeUTF("m: " + m + '\n');
+                fin.writeUTF("k: " + k + '\n');
                 fin.close();
             } catch (Exception e){
                 e.printStackTrace();
-            }*/
+            }
 
         }
     }

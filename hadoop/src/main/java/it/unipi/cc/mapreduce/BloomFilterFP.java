@@ -1,6 +1,5 @@
 package it.unipi.cc.mapreduce;
 
-import it.unipi.cc.Driver;
 import it.unipi.cc.model.BloomFilter;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
@@ -12,18 +11,15 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class BloomFilterFPR {
+public class BloomFilterFP {
     private static int n_rates;
     private static final IntWritable outputKey = new IntWritable();
     private static final IntWritable outputValue = new IntWritable();
-    private static int[] d_counters;
 
-    public static class FPRMapper extends Mapper<Object, Text, IntWritable, IntWritable>{
+    public static class FPMapper extends Mapper<Object, Text, IntWritable, IntWritable>{
         private static int[] fp_counters;
         private final ArrayList<BloomFilter> bloomFilters = new ArrayList<>();
 
@@ -35,7 +31,6 @@ public class BloomFilterFPR {
                 System.exit(-1);
 
             fp_counters = new int[n_rates];
-            d_counters = new int[n_rates];
 
             for(int i=0; i<n_rates; i++)
                 bloomFilters.add(new BloomFilter());
@@ -72,8 +67,6 @@ public class BloomFilterFPR {
                 if (roundedRating == i)
                     continue;
 
-                d_counters[i]++;
-
                 if (bloomFilters.get(i).find(tokens[0]))
                     fp_counters[i]++;
 
@@ -90,7 +83,7 @@ public class BloomFilterFPR {
         }
     }
 
-    public static class FPRReducer extends Reducer<IntWritable, IntWritable, IntWritable, IntWritable> {
+    public static class FPReducer extends Reducer<IntWritable, IntWritable, IntWritable, IntWritable> {
         private static int counter;
 
         // rate and mappers count in input
@@ -102,16 +95,11 @@ public class BloomFilterFPR {
             for (IntWritable value : mapper_counts)
                 counter += value.get();
 
-            double fpr;
-            if(d_counters[key.get()-1] == 0)
-                fpr = 0;
-            else
-                fpr = (double)counter/ (double)(d_counters[key.get()-1]);
 
             //ESECUZIONE IN LOCALE
 //            try {
 //                BufferedWriter out = new BufferedWriter(new FileWriter("fpr.txt", true));
-//                out.write("RATE " + key.get() + "\tCOUNTER: " + counter + "\tFPR: " +  fpr + "\n");
+//                out.write("RATE " + key.get() + "\tCOUNTER: " + counter + "\n");
 //                out.close();
 //            } catch (IOException e) {
 //                System.out.println("exception occurred" + e);
@@ -119,13 +107,11 @@ public class BloomFilterFPR {
 
             //ESECUZIONE SU CLUSTER
             FileSystem fs = FileSystem.get(context.getConfiguration());
-            Path filenamePath = new Path("FPR.txt");
+            Path filenamePath = new Path("output/FP" + key.get() + ".txt");
             try {
-                if (fs.exists(filenamePath)) {
-                    fs.delete(filenamePath, true);
-                }
                 FSDataOutputStream fin = fs.create(filenamePath);
-                fin.writeUTF("RATE " + key.get() + "\tCOUNTER: " + counter + "\t\tFPR: " +  fpr + "\n");
+                fin.writeUTF("key: " + key.get() + '\n');
+                fin.writeUTF("counter: " + counter + "\n");
                 fin.close();
             } catch (Exception e){
                 e.printStackTrace();

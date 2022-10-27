@@ -1,29 +1,23 @@
 package it.unipi.cc;
 
 import it.unipi.cc.mapreduce.BloomFilterCreation;
-import it.unipi.cc.mapreduce.BloomFilterFPR;
+import it.unipi.cc.mapreduce.BloomFilterFP;
 import it.unipi.cc.mapreduce.ParameterCalibration;
 import it.unipi.cc.model.BloomFilter;
 import it.unipi.cc.model.IntArrayWritable;
-import org.apache.hadoop.io.SequenceFile;
-import org.apache.hadoop.mapreduce.lib.input.NLineInputFormat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.lib.input.NLineInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
-import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.List;
 
 public class Driver {
 
@@ -31,7 +25,7 @@ public class Driver {
     private static final String OUTPUT_FOLDER = "output/";
     private static final String OUTPUT_CALIBRATE = "outStage1";
     private static final String OUTPUT_CREATE = "outStage2";
-    private static final String OUTPUT_FPR = "fp_rates";
+    private static final String OUTPUT_FP = "fp_rates";
 
     // configuration variables
     private static String INPUT;
@@ -51,7 +45,7 @@ public class Driver {
             System.exit(-1);
         }
 
-
+        //print configuration
         System.out.println("---------------------------------------");
         System.out.println("Configuration variables\n");
         System.out.println("---------------------------------------");
@@ -62,7 +56,7 @@ public class Driver {
         System.out.println("Number of lines:\t" + otherArgs[4]);
         System.out.println("---------------------------------------\n");
 
-
+        //get args from terminal
         INPUT = otherArgs[0];
         N_RATES = Integer.parseInt(otherArgs[1]);
         conf.set("n_rates", otherArgs[1]);
@@ -82,14 +76,15 @@ public class Driver {
         if(fs.exists(new Path(OUTPUT_FOLDER)))
             fs.delete(new Path(OUTPUT_FOLDER), true);
 
-        print("Parameter calibration stage...");
         // first stage
+        print("Parameter calibration stage...");
         if(!calibrateParams(conf)){
             fs.close();
             System.exit(-1);
         }
         print("Parameters correctly calibrated!");
 
+        //set m and k parameters
         FileStatus[] status = fs.listStatus(new Path(OUTPUT_FOLDER + OUTPUT_CALIBRATE));
         int[] params = new int[2];
 
@@ -107,12 +102,11 @@ public class Driver {
                     params[1] = kWritable.get();
                     conf.set("filter_k", String.valueOf(params[1]));
                     conf.set("filter_" + key.get()+ "_m", String.valueOf(params[0]));
-
-                    Driver.print("Rate - " + key + "\tm: " + params[0] + ", k: " + params[1]);
                 }
             }
         }
 
+        //second stage
         print("Bloom filters creation stage...");
         if (!createBloomFilters(conf)) {
             fs.close();
@@ -120,14 +114,14 @@ public class Driver {
         }
         print("BloomFilters correctly created!");
 
-        print("FPR computation stage...");
+        //third stage
+        print("FP computation stage...");
         conf.set("outStage2", OUTPUT_FOLDER+OUTPUT_CREATE);
-        if (!computeFPR(conf)) {
+        if (!computeFP(conf)) {
             fs.close();
             System.exit(-1);
         }
-
-        print("The End");
+        print("FP correctly computed!");
 
     }
 
@@ -187,13 +181,13 @@ public class Driver {
         return job.waitForCompletion(true);
     }
 
-    private static boolean computeFPR(Configuration conf) throws IOException, InterruptedException, ClassNotFoundException {
+    private static boolean computeFP(Configuration conf) throws IOException, InterruptedException, ClassNotFoundException {
 
         Job job = Job.getInstance(conf, "fpr");
-        job.setJarByClass(BloomFilterFPR.class);
+        job.setJarByClass(BloomFilterFP.class);
 
-        job.setMapperClass(BloomFilterFPR.FPRMapper.class);
-        job.setReducerClass(BloomFilterFPR.FPRReducer.class);
+        job.setMapperClass(BloomFilterFP.FPMapper.class);
+        job.setReducerClass(BloomFilterFP.FPReducer.class);
 
         // mapper's output key and output value
         job.setMapOutputKeyClass(IntWritable.class);
@@ -209,7 +203,7 @@ public class Driver {
         job.setInputFormatClass(NLineInputFormat.class);
         job.setOutputFormatClass(SequenceFileOutputFormat.class);
 
-        FileOutputFormat.setOutputPath(job, new Path(OUTPUT_FOLDER+OUTPUT_FPR));
+        FileOutputFormat.setOutputPath(job, new Path(OUTPUT_FOLDER+OUTPUT_FP));
 
         return job.waitForCompletion(true);
     }
