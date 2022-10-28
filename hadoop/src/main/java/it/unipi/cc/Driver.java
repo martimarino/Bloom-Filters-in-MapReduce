@@ -12,23 +12,18 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
-import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
 
-import java.io.BufferedReader;
+
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.List;
 
 public class Driver {
 
     // files for input and output
-    private static final String OUTPUT_FOLDER = "output/";
+    private static final String OUTPUT_FOLDER = "hadoop/output/";
     private static final String OUTPUT_CALIBRATE = "outStage1";
     private static final String OUTPUT_CREATE = "outStage2";
     private static final String OUTPUT_FPR = "fp_rates";
@@ -91,7 +86,8 @@ public class Driver {
         print("Parameters correctly calibrated!");
 
         FileStatus[] status = fs.listStatus(new Path(OUTPUT_FOLDER + OUTPUT_CALIBRATE));
-        int[] params = new int[2];
+        int[] params = new int[3]; /////////////
+        int[] rate_count = new int[10];
 
         for(FileStatus filestatus : status) {
             String f = String.valueOf(filestatus.getPath());
@@ -103,12 +99,14 @@ public class Driver {
                 while (reader.next(key, value)) {
                     IntWritable mWritable = (IntWritable) value.get()[0];
                     IntWritable kWritable = (IntWritable) value.get()[1];
+                    IntWritable nWritable = (IntWritable) value.get()[2];
                     params[0] = mWritable.get();
                     params[1] = kWritable.get();
+                    params[2] = nWritable.get();
                     conf.set("filter_k", String.valueOf(params[1]));
                     conf.set("filter_" + key.get()+ "_m", String.valueOf(params[0]));
-
-                    Driver.print("Rate - " + key + "\tm: " + params[0] + ", k: " + params[1]);
+                    rate_count[key.get()-1] = params[2];
+                    //Driver.print("Rate - " + key + "\tm: " + params[0] + ", k: " + params[1]);
                 }
             }
         }
@@ -127,9 +125,35 @@ public class Driver {
             System.exit(-1);
         }
 
+        status = fs.listStatus(new Path(OUTPUT_FOLDER + OUTPUT_FPR));
+        double[] falsePositiveCounter = new double[10];
+        for(FileStatus filestatus : status) {
+            String f = String.valueOf(filestatus.getPath());
+            if(f.contains("SUCCESS"))
+                continue;
+            IntWritable key = new IntWritable();
+            IntWritable value = new IntWritable();
+            try (SequenceFile.Reader reader = new SequenceFile.Reader(conf, SequenceFile.Reader.file(filestatus.getPath()))) {
+                while (reader.next(key, value)) {
+                    falsePositiveCounter[key.get()-1] = value.get();
+                }
+            }
+        }
+        double[] falsePositiveRate = new double[10];
+        double tot = 0;
+
+        for (int i=0; i<10; i++)
+            tot += rate_count[i];
+
+        for (int i=0; i<10; i++) {
+            falsePositiveRate[i] = falsePositiveCounter[i]/(tot-rate_count[i]);
+            System.out.println(i+ "\t"+falsePositiveRate[i]);
+        }
+
         print("The End");
 
     }
+
 
     private static boolean calibrateParams(Configuration conf) throws IOException, InterruptedException, ClassNotFoundException {
 

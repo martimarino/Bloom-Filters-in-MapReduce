@@ -1,6 +1,5 @@
 package it.unipi.cc.mapreduce;
 
-import it.unipi.cc.Driver;
 import it.unipi.cc.model.BloomFilter;
 import it.unipi.cc.model.IntArrayWritable;
 import org.apache.hadoop.io.IntWritable;
@@ -11,9 +10,6 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 import org.apache.hadoop.util.hash.MurmurHash;
 
-
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.BitSet;
 
@@ -25,7 +21,6 @@ public class BloomFilterCreation {
     public static class BFCMapper extends Mapper<Object, Text, IntWritable, IntArrayWritable> {
 
         private static int k;
-        private static int roundedRating;
         private static final IntWritable outputKey = new IntWritable();
         private static IntWritable[] indices;
         private static final IntArrayWritable outputValue = new IntArrayWritable();
@@ -44,10 +39,10 @@ public class BloomFilterCreation {
             if(value.toString().startsWith("tconst"))
                 return;
             String[] tokens = value.toString().split("\t"); //id (0) , rating (1)
-            roundedRating = (int) Math.round(Double.parseDouble(tokens[1]));
+            int roundedRating = (int) Math.round(Double.parseDouble(tokens[1]));
             int m = Integer.parseInt(context.getConfiguration().get("filter_" + roundedRating + "_m"));
 
-            Driver.print("M: " + m + "RATE: " + roundedRating);
+            //Driver.print("M: " + m + "RATE: " + roundedRating);
 
             for(int i = 0; i < k; i++)
                 indices[i] = new IntWritable(Math.abs(MurmurHash.getInstance(MURMUR_HASH).hash(tokens[0].getBytes(), i) % m));

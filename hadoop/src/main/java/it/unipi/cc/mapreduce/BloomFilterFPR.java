@@ -2,7 +2,6 @@ package it.unipi.cc.mapreduce;
 
 import it.unipi.cc.Driver;
 import it.unipi.cc.model.BloomFilter;
-import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -91,13 +90,11 @@ public class BloomFilterFPR {
     }
 
     public static class FPRReducer extends Reducer<IntWritable, IntWritable, IntWritable, IntWritable> {
-        private static int counter;
 
         // rate and mappers count in input
         @Override
         public void reduce(IntWritable key, Iterable<IntWritable> mapper_counts, Context context) throws IOException, InterruptedException {
-
-            counter = 0;
+            int counter = 0;
 
             for (IntWritable value : mapper_counts)
                 counter += value.get();
@@ -106,30 +103,32 @@ public class BloomFilterFPR {
             if(d_counters[key.get()-1] == 0)
                 fpr = 0;
             else
-                fpr = (double)counter/ (double)(d_counters[key.get()-1]);
+                fpr = (double) counter / (double)(d_counters[key.get()-1]);
 
             //ESECUZIONE IN LOCALE
-//            try {
-//                BufferedWriter out = new BufferedWriter(new FileWriter("fpr.txt", true));
-//                out.write("RATE " + key.get() + "\tCOUNTER: " + counter + "\tFPR: " +  fpr + "\n");
-//                out.close();
-//            } catch (IOException e) {
-//                System.out.println("exception occurred" + e);
-//            }
+            try {
+                BufferedWriter out = new BufferedWriter(new FileWriter("hadoop/output/fpr.txt", true));
+                out.write("RATE " + key.get() + "\tCOUNTER: " + counter + "\tFPR: " +  fpr + "\n");
+                out.close();
+                Driver.print("RATE " + key.get() + "\tCOUNTER: " + counter + "\tFPR: " +  fpr + "\n");
+
+            } catch (IOException e) {
+                System.out.println("exception occurred" + e);
+            }
 
             //ESECUZIONE SU CLUSTER
-            FileSystem fs = FileSystem.get(context.getConfiguration());
-            Path filenamePath = new Path("FPR.txt");
-            try {
-                if (fs.exists(filenamePath)) {
-                    fs.delete(filenamePath, true);
-                }
-                FSDataOutputStream fin = fs.create(filenamePath);
-                fin.writeUTF("RATE " + key.get() + "\tCOUNTER: " + counter + "\t\tFPR: " +  fpr + "\n");
-                fin.close();
-            } catch (Exception e){
-                e.printStackTrace();
-            }
+//            FileSystem fs = FileSystem.get(context.getConfiguration());
+//            Path filenamePath = new Path("FPR.txt");
+//            try {
+//                if (fs.exists(filenamePath)) {
+//                    fs.delete(filenamePath, true);
+//                }
+//                FSDataOutputStream fin = fs.create(filenamePath);
+//                fin.writeUTF("RATE " + key.get() + "\tCOUNTER: " + counter + "\t\tFPR: " +  fpr + "\n");
+//                fin.close();
+//            } catch (Exception e){
+//                e.printStackTrace();
+//            }
 
             outputKey.set(key.get());
             outputValue.set(counter);
