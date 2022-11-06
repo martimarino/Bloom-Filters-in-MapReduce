@@ -22,7 +22,7 @@ import java.io.IOException;
 public class Driver {
 
     // files for input and output
-    private static final String OUTPUT_FOLDER = "output/";
+    private static final String OUTPUT_FOLDER = "hadoop/output/";
     private static final String OUTPUT_CALIBRATE = "outStage1";
     private static final String OUTPUT_CREATE = "outStage2";
     private static final String OUTPUT_FP = "fp_rates";
@@ -86,7 +86,7 @@ public class Driver {
 
         FileStatus[] status = fs.listStatus(new Path(OUTPUT_FOLDER + OUTPUT_CALIBRATE));
         int[] params = new int[3];
-        int[] rate_count = new int[10];
+        int[] rate_count = new int[N_RATES];
 
         for(FileStatus filestatus : status) {
             String f = String.valueOf(filestatus.getPath());
@@ -127,7 +127,7 @@ public class Driver {
         print("FP correctly computed!");
 
         status = fs.listStatus(new Path(OUTPUT_FOLDER + OUTPUT_FP));
-        double[] falsePositiveCounter = new double[10];
+        double[] falsePositiveCounter = new double[N_RATES];
         for(FileStatus filestatus : status) {
             String f = String.valueOf(filestatus.getPath());
             if(f.contains("SUCCESS"))
@@ -140,13 +140,13 @@ public class Driver {
                 }
             }
         }
-        double[] falsePositiveRate = new double[10];
+        double[] falsePositiveRate = new double[N_RATES];
         double tot = 0;
 
-        for (int i=0; i<10; i++)
+        for (int i=0; i<N_RATES; i++)
             tot += rate_count[i];
 
-        for (int i=0; i<10; i++) {
+        for (int i=0; i<N_RATES; i++) {
             falsePositiveRate[i] = falsePositiveCounter[i]/(tot-rate_count[i]);
             System.out.println(i+ "\t"+falsePositiveRate[i]);
         }

@@ -9,6 +9,8 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
 
 public class ParameterCalibration {
@@ -78,27 +80,27 @@ public class ParameterCalibration {
             context.write(key, params);
 
             //ESECUZIONE IN LOCALE
-//            try {
-//                BufferedWriter out = new BufferedWriter(new FileWriter("output/nmk.txt", true));
-//                out.write("RATE " + key.get() + "\tn: " + n + "\tm: " + m + "\tk: " + k + "\n");
-//                out.close();
-//            } catch (IOException e) {
-//                System.out.println("exception occurred" + e);
-//            }
+            try {
+                BufferedWriter out = new BufferedWriter(new FileWriter("hadoop/output/nmk.txt", true));
+                out.write("RATE " + key.get() + "\tn: " + n + "\tm: " + m + "\tk: " + k + "\n");
+                out.close();
+            } catch (IOException e) {
+                System.out.println("exception occurred" + e);
+            }
 
             //ESECUZIONE SU CLUSTER
-            FileSystem fs = FileSystem.get(context.getConfiguration());
-            Path filenamePath = new Path("output/nmk" + key.get() + ".txt");
-            try {
-                FSDataOutputStream fin = fs.create(filenamePath);
-                fin.writeUTF("key " + key.get() + '\n');
-                fin.writeUTF("n: " + n + '\n');
-                fin.writeUTF("m: " + m + '\n');
-                fin.writeUTF("k: " + k + '\n');
-                fin.close();
-            } catch (Exception e){
-                e.printStackTrace();
-            }
+//            FileSystem fs = FileSystem.get(context.getConfiguration());
+//            Path filenamePath = new Path("output/nmk" + key.get() + ".txt");
+//            try {
+//                FSDataOutputStream fin = fs.create(filenamePath);
+//                fin.writeUTF("key " + key.get() + '\n');
+//                fin.writeUTF("n: " + n + '\n');
+//                fin.writeUTF("m: " + m + '\n');
+//                fin.writeUTF("k: " + k + '\n');
+//                fin.close();
+//            } catch (Exception e){
+//                e.printStackTrace();
+//            }
 
         }
     }

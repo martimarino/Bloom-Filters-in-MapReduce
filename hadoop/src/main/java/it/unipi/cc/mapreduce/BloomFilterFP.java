@@ -11,6 +11,8 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -90,25 +92,25 @@ public class BloomFilterFP {
                 counter += value.get();
 
             //ESECUZIONE IN LOCALE
-//            try {
-//                BufferedWriter out = new BufferedWriter(new FileWriter("fpr.txt", true));
-//                out.write("RATE " + key.get() + "\tCOUNTER: " + counter + "\n");
-//                out.close();
-//            } catch (IOException e) {
-//                System.out.println("exception occurred" + e);
-//            }
+            try {
+                BufferedWriter out = new BufferedWriter(new FileWriter("hadoop/output/fpr.txt", true));
+                out.write("RATE " + key.get() + "\tCOUNTER: " + counter + "\n");
+                out.close();
+            } catch (IOException e) {
+                System.out.println("exception occurred" + e);
+            }
 
             //ESECUZIONE SU CLUSTER
-            FileSystem fs = FileSystem.get(context.getConfiguration());
-            Path filenamePath = new Path("output/FP" + key.get() + ".txt");
-            try {
-                FSDataOutputStream fin = fs.create(filenamePath);
-                fin.writeUTF("key: " + key.get() + '\n');
-                fin.writeUTF("counter: " + counter + "\n");
-                fin.close();
-            } catch (Exception e){
-                e.printStackTrace();
-            }
+//            FileSystem fs = FileSystem.get(context.getConfiguration());
+//            Path filenamePath = new Path("output/FP" + key.get() + ".txt");
+//            try {
+//                FSDataOutputStream fin = fs.create(filenamePath);
+//                fin.writeUTF("key: " + key.get() + '\n');
+//                fin.writeUTF("counter: " + counter + "\n");
+//                fin.close();
+//            } catch (Exception e){
+//                e.printStackTrace();
+//            }
 
             outputKey.set(key.get());
             outputValue.set(counter);
