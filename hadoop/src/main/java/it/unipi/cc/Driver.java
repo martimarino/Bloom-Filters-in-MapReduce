@@ -18,6 +18,8 @@ import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
 
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
 
 public class Driver {
@@ -149,9 +151,6 @@ public class Driver {
             falsePositiveRate[i] = falsePositiveCounter[i]/(tot-rate_count[i]);
             System.out.println(i+ "\t"+falsePositiveRate[i]);
         }
-
-        print("The End");
-
     }
 
 

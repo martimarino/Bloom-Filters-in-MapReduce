@@ -68,6 +68,7 @@ public class ParameterCalibration {
             int m = (int) (- (n * Math.log(p)) / (Math.pow(Math.log(2),2)));
             int k = (int) ((m/n) * Math.log(2));
 
+            //Driver.print("RATE:" + key.get() + "N: " + n + " M: " + m + " K: " + k);
             arr[0] = new IntWritable(m);
             arr[1] = new IntWritable(k);
             arr[2] = new IntWritable(n);

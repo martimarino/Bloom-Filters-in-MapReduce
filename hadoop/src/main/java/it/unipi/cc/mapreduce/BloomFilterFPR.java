@@ -20,7 +20,6 @@ public class BloomFilterFPR {
     private static int n_rates;
     private static final IntWritable outputKey = new IntWritable();
     private static final IntWritable outputValue = new IntWritable();
-    private static int[] d_counters;
 
     public static class FPRMapper extends Mapper<Object, Text, IntWritable, IntWritable>{
         private static int[] fp_counters;
@@ -34,7 +33,6 @@ public class BloomFilterFPR {
                 System.exit(-1);
 
             fp_counters = new int[n_rates];
-            d_counters = new int[n_rates];
 
             for(int i=0; i<n_rates; i++)
                 bloomFilters.add(new BloomFilter());
@@ -71,8 +69,6 @@ public class BloomFilterFPR {
                 if (roundedRating == i)
                     continue;
 
-                d_counters[i]++;
-
                 if (bloomFilters.get(i).find(tokens[0]))
                     fp_counters[i]++;
 
@@ -99,18 +95,12 @@ public class BloomFilterFPR {
             for (IntWritable value : mapper_counts)
                 counter += value.get();
 
-            double fpr;
-            if(d_counters[key.get()-1] == 0)
-                fpr = 0;
-            else
-                fpr = (double) counter / (double)(d_counters[key.get()-1]);
-
             //ESECUZIONE IN LOCALE
             try {
-                BufferedWriter out = new BufferedWriter(new FileWriter("hadoop/output/fpr.txt", true));
-                out.write("RATE " + key.get() + "\tCOUNTER: " + counter + "\tFPR: " +  fpr + "\n");
+                BufferedWriter out = new BufferedWriter(new FileWriter("hadoop/output/fp.txt", true));
+                out.write("RATE " + key.get() + "\tCOUNTER: " + counter + "\n");
                 out.close();
-                Driver.print("RATE " + key.get() + "\tCOUNTER: " + counter + "\tFPR: " +  fpr + "\n");
+                Driver.print("RATE " + key.get() + "\tCOUNTER: " + counter + "\n");
 
             } catch (IOException e) {
                 System.out.println("exception occurred" + e);
