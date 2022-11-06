@@ -7,3 +7,4 @@ dataset.tsv
 *.txt
 /output
 /out
+**/.DS_Store

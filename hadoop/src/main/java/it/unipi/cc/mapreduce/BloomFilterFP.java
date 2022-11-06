@@ -55,7 +55,7 @@ public class BloomFilterFP {
         }
 
         @Override
-        public void map(Object key, Text value, Context context) {
+        public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
 
             String record = value.toString();
             if (record == null || record.startsWith("tconst"))
@@ -70,12 +70,6 @@ public class BloomFilterFP {
                 if (bloomFilters.get(i).find(tokens[0]))
                     fp_counters[i]++;
 
-            }
-        }
-
-        @Override
-        protected void cleanup(Context context) throws IOException, InterruptedException {
-            for(int i = 0; i < n_rates; i++) {
                 outputKey.set(i+1);
                 outputValue.set(fp_counters[i]);
                 context.write(outputKey, outputValue);
