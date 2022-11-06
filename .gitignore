@@ -7,4 +7,4 @@ dataset.tsv
 *.txt
 /output
 /out
-**/.DS_Store
+**/DS_Store

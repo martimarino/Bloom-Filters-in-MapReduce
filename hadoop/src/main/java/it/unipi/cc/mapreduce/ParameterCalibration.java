@@ -57,7 +57,7 @@ public class ParameterCalibration {
         protected void setup(Context context) {
 
             p = context.getConfiguration().getDouble("p", 0.01);
-            arr = new IntWritable[2];
+            arr = new IntWritable[3]; /////////////
         }
 
         @Override
@@ -68,11 +68,11 @@ public class ParameterCalibration {
 
             int m = (int) (- (n * Math.log(p)) / (Math.pow(Math.log(2),2)));
             int k = (int) ((m/n) * Math.log(2));
-//            Driver.print("RATE " + key.get() + "\tn: " + n + "\tm: " + m + "\tk: " + k + "\n");
 
-
+            //Driver.print("RATE:" + key.get() + "N: " + n + " M: " + m + " K: " + k);
             arr[0] = new IntWritable(m);
             arr[1] = new IntWritable(k);
+            arr[2] = new IntWritable(n);
             params.set(arr);
 
             context.write(key, params);

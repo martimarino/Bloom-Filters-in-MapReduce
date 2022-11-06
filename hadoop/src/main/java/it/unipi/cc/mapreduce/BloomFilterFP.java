@@ -89,7 +89,6 @@ public class BloomFilterFP {
             for (IntWritable value : mapper_counts)
                 counter += value.get();
 
-
             //ESECUZIONE IN LOCALE
 //            try {
 //                BufferedWriter out = new BufferedWriter(new FileWriter("fpr.txt", true));

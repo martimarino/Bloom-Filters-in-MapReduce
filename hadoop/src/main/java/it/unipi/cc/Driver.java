@@ -84,9 +84,9 @@ public class Driver {
         }
         print("Parameters correctly calibrated!");
 
-        //set m and k parameters
         FileStatus[] status = fs.listStatus(new Path(OUTPUT_FOLDER + OUTPUT_CALIBRATE));
-        int[] params = new int[2];
+        int[] params = new int[3];
+        int[] rate_count = new int[10];
 
         for(FileStatus filestatus : status) {
             String f = String.valueOf(filestatus.getPath());
@@ -98,15 +98,18 @@ public class Driver {
                 while (reader.next(key, value)) {
                     IntWritable mWritable = (IntWritable) value.get()[0];
                     IntWritable kWritable = (IntWritable) value.get()[1];
+                    IntWritable nWritable = (IntWritable) value.get()[2];
                     params[0] = mWritable.get();
                     params[1] = kWritable.get();
+                    params[2] = nWritable.get();
                     conf.set("filter_k", String.valueOf(params[1]));
                     conf.set("filter_" + key.get()+ "_m", String.valueOf(params[0]));
+                    rate_count[key.get()-1] = params[2];
+                    //Driver.print("Rate - " + key + "\tm: " + params[0] + ", k: " + params[1]);
                 }
             }
         }
 
-        //second stage
         print("Bloom filters creation stage...");
         if (!createBloomFilters(conf)) {
             fs.close();
@@ -123,7 +126,32 @@ public class Driver {
         }
         print("FP correctly computed!");
 
+        status = fs.listStatus(new Path(OUTPUT_FOLDER + OUTPUT_FP));
+        double[] falsePositiveCounter = new double[10];
+        for(FileStatus filestatus : status) {
+            String f = String.valueOf(filestatus.getPath());
+            if(f.contains("SUCCESS"))
+                continue;
+            IntWritable key = new IntWritable();
+            IntWritable value = new IntWritable();
+            try (SequenceFile.Reader reader = new SequenceFile.Reader(conf, SequenceFile.Reader.file(filestatus.getPath()))) {
+                while (reader.next(key, value)) {
+                    falsePositiveCounter[key.get()-1] = value.get();
+                }
+            }
+        }
+        double[] falsePositiveRate = new double[10];
+        double tot = 0;
+
+        for (int i=0; i<10; i++)
+            tot += rate_count[i];
+
+        for (int i=0; i<10; i++) {
+            falsePositiveRate[i] = falsePositiveCounter[i]/(tot-rate_count[i]);
+            System.out.println(i+ "\t"+falsePositiveRate[i]);
+        }
     }
+
 
     private static boolean calibrateParams(Configuration conf) throws IOException, InterruptedException, ClassNotFoundException {
 
