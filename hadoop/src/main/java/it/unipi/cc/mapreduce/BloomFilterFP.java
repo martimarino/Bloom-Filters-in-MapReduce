@@ -72,6 +72,12 @@ public class BloomFilterFP {
                 if (bloomFilters.get(i).find(tokens[0]))
                     fp_counters[i]++;
 
+            }
+        }
+
+        @Override
+        protected void cleanup(Context context) throws IOException, InterruptedException {
+            for(int i = 0; i < n_rates; i++) {
                 outputKey.set(i+1);
                 outputValue.set(fp_counters[i]);
                 context.write(outputKey, outputValue);
@@ -93,7 +99,7 @@ public class BloomFilterFP {
 
             //ESECUZIONE IN LOCALE
             try {
-                BufferedWriter out = new BufferedWriter(new FileWriter("hadoop/output/fpr.txt", true));
+                BufferedWriter out = new BufferedWriter(new FileWriter("hadoop/output/fp.txt", true));
                 out.write("RATE " + key.get() + "\tCOUNTER: " + counter + "\n");
                 out.close();
             } catch (IOException e) {
