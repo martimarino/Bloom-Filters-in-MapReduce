@@ -3,7 +3,7 @@
 /hadoop/out/
 /hadoop/output/
 /hadoop/target/
-dataset.tsv
+*.tsv
 *.txt
 /output
 /out
