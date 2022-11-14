@@ -4,9 +4,9 @@ import mmh3
 import numpy as np
 from bitarray import bitarray
 
-import findspark
+# import findspark
 
-findspark.init()
+# findspark.init()
 
 from pyspark import SparkConf, SparkContext
 from pyspark.sql import SparkSession
@@ -62,7 +62,7 @@ if __name__ == "__main__":
     # p = float(sys.argv[3])
 
     conf = (SparkConf()
-            .setMaster("local[*]")
+            .setMaster("yarn")
             .setAppName("BFSpark"))
 
     # initialize a new Spark Context to use for the execution of the script
@@ -70,12 +70,14 @@ if __name__ == "__main__":
 
     p = 0.01
     # path = "hdfs://172.16.4.137:8020/dataset.tsv"
-    path = "data.tsv"
+    path = "dataset.tsv"
 
     spark = SparkSession(sc)
+    spark.sparkContext.setLogLevel("ERROR")
 
     # STAGE 1
     # loading the csv removing numVotes
+    print("\n*****************************************************************\n")
     print("Starting STAGE 1...")
     rdd = spark.read.csv(path, sep='\t', header=True).drop('numVotes').select("tconst", "averageRating").rdd
     new_dataset = rdd.map(lambda x: (int(round(float(x[1]))), x[0]))
@@ -129,3 +131,5 @@ if __name__ == "__main__":
 
     for i in fp_set:
         print(i)
+
+    print("\n*****************************************************************\n")

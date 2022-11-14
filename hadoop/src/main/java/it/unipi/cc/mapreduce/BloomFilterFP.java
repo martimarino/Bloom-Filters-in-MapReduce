@@ -11,23 +11,23 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 
 public class BloomFilterFP {
+
     private static int n_rates;
     private static final IntWritable outputKey = new IntWritable();
     private static final IntWritable outputValue = new IntWritable();
 
-    public static class FPMapper extends Mapper<Object, Text, IntWritable, IntWritable>{
+    public static class FPMapper extends Mapper<Object, Text, IntWritable, IntWritable> {
+
         private static int[] fp_counters;
         private final ArrayList<BloomFilter> bloomFilters = new ArrayList<>();
 
         @Override
         protected void setup(Context context) throws IOException, InterruptedException {
-            super.setup(context);
+
             n_rates = context.getConfiguration().getInt("n_rates", 0);
             if(n_rates == 0)
                 System.exit(-1);
@@ -37,6 +37,7 @@ public class BloomFilterFP {
             for(int i=0; i<n_rates; i++)
                 bloomFilters.add(new BloomFilter());
 
+            // read bloom filters from creation stage and reconstruct them
             FileSystem fs = FileSystem.get(context.getConfiguration());
             FileStatus[] status = fs.listStatus(new Path(context.getConfiguration().get("outStage2")));
 
@@ -57,19 +58,19 @@ public class BloomFilterFP {
         }
 
         @Override
-        public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
+        public void map(Object key, Text value, Context context) {
 
             String record = value.toString();
-            if (record == null || record.startsWith("tconst"))
+            if (record == null || record.startsWith("tconst"))      // skip the header
                 return;
-            String[] tokens = record.split("\t");  //id (0) , rating (1)
+            String[] tokens = record.split("\t");             // token : <title, rating, numVotes>
             int roundedRating = (int) Math.round(Double.parseDouble(tokens[1]))-1;
 
             for(int i = 0; i < n_rates; i++) {
-                if (roundedRating == i)
+                if (roundedRating == i)         // skip the true positive
                     continue;
 
-                if (bloomFilters.get(i).find(tokens[0]))
+                if (bloomFilters.get(i).find(tokens[0]))        // count the false positives
                     fp_counters[i]++;
 
             }
@@ -86,41 +87,40 @@ public class BloomFilterFP {
     }
 
     public static class FPReducer extends Reducer<IntWritable, IntWritable, IntWritable, IntWritable> {
-        private static int counter;
 
-        // rate and mappers count in input
+        // rating and mappers count in input
         @Override
         public void reduce(IntWritable key, Iterable<IntWritable> mapper_counts, Context context) throws IOException, InterruptedException {
 
-            counter = 0;
+            int counter = 0;        // sum of all the false positives relative to the key
 
             for (IntWritable value : mapper_counts)
                 counter += value.get();
 
             //ESECUZIONE IN LOCALE
-            try {
-                BufferedWriter out = new BufferedWriter(new FileWriter("hadoop/output/fp.txt", true));
-                out.write("RATE " + key.get() + "\tCOUNTER: " + counter + "\n");
-                out.close();
-            } catch (IOException e) {
-                System.out.println("exception occurred" + e);
-            }
+//            try {
+//                BufferedWriter out = new BufferedWriter(new FileWriter("hadoop/output/fp.txt", true));
+//                out.write("RATE " + key.get() + "\tCOUNTER: " + counter + "\n");
+//                out.close();
+//            } catch (IOException e) {
+//                System.out.println("exception occurred" + e);
+//            }
 
             //ESECUZIONE SU CLUSTER
-//            FileSystem fs = FileSystem.get(context.getConfiguration());
-//            Path filenamePath = new Path("output/FP" + key.get() + ".txt");
-//            try {
-//                FSDataOutputStream fin = fs.create(filenamePath);
-//                fin.writeUTF("key: " + key.get() + '\n');
-//                fin.writeUTF("counter: " + counter + "\n");
-//                fin.close();
-//            } catch (Exception e){
-//                e.printStackTrace();
-//            }
+            FileSystem fs = FileSystem.get(context.getConfiguration());
+            Path filenamePath = new Path("output/FP" + key.get() + ".txt");
+            try {
+                FSDataOutputStream fin = fs.create(filenamePath);
+                fin.writeUTF("key: " + key.get() + '\n');
+                fin.writeUTF("counter: " + counter + "\n");
+                fin.close();
+            } catch (Exception e){
+                e.printStackTrace();
+            }
 
             outputKey.set(key.get());
             outputValue.set(counter);
-            context.write(outputKey, outputValue); //write rate and number of fp
+            context.write(outputKey, outputValue); // write rating and number of fp
         }
     }
 
