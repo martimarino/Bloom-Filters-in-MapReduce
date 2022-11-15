@@ -1,10 +1,13 @@
 package it.unipi.cc;
 
-import it.unipi.cc.mapreduce.BloomFilterCreation;
-import it.unipi.cc.mapreduce.BloomFilterFP;
+import it.unipi.cc.calibration.CalibrationReducer;
+import it.unipi.cc.creation.CreationMapper;
+import it.unipi.cc.creation.CreationReducer;
 import it.unipi.cc.model.BloomFilter;
 import it.unipi.cc.model.IntArrayWritable;
-import it.unipi.cc.mapreduce.ParameterCalibration;
+import it.unipi.cc.calibration.CalibrationMapper;
+import it.unipi.cc.validation.ValidationMapper;
+import it.unipi.cc.validation.ValidationReducer;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -159,8 +162,8 @@ public class Driver {
         Job job = Job.getInstance(conf, "calibrate");
         job.setJarByClass(Driver.class);
 
-        job.setMapperClass(ParameterCalibration.PCMapper.class);
-        job.setReducerClass(ParameterCalibration.PCReducer.class);
+        job.setMapperClass(CalibrationMapper.class);
+        job.setReducerClass(CalibrationReducer.class);
 
         // mapper's output key and output value
         job.setMapOutputKeyClass(IntWritable.class);
@@ -178,10 +181,10 @@ public class Driver {
     private static boolean createBloomFilters(Configuration conf) throws IOException, InterruptedException, ClassNotFoundException {
 
         Job job = Job.getInstance(conf, "create");
-        job.setJarByClass(BloomFilterCreation.class);
+        job.setJarByClass(Driver.class);
 
-        job.setMapperClass(BloomFilterCreation.BFCMapper.class);
-        job.setReducerClass(BloomFilterCreation.BFCReducer.class);
+        job.setMapperClass(CreationMapper.class);
+        job.setReducerClass(CreationReducer.class);
 
         // mapper's output key and output value
         job.setMapOutputKeyClass(IntWritable.class);
@@ -197,10 +200,10 @@ public class Driver {
     private static boolean computeFP(Configuration conf) throws IOException, InterruptedException, ClassNotFoundException {
 
         Job job = Job.getInstance(conf, "fp");
-        job.setJarByClass(BloomFilterFP.class);
+        job.setJarByClass(Driver.class);
 
-        job.setMapperClass(BloomFilterFP.FPMapper.class);
-        job.setReducerClass(BloomFilterFP.FPReducer.class);
+        job.setMapperClass(ValidationMapper.class);
+        job.setReducerClass(ValidationReducer.class);
 
         // mapper's output key and output value
         job.setMapOutputKeyClass(IntWritable.class);
