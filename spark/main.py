@@ -1,5 +1,7 @@
 import sys
 import math
+import time
+
 import mmh3
 import numpy as np
 from bitarray import bitarray
@@ -62,21 +64,22 @@ if __name__ == "__main__":
     # p = float(sys.argv[3])
 
     conf = (SparkConf()
-            .setMaster("local[*]")
+            .setMaster("yarn")
             .setAppName("BFSpark"))
 
     # initialize a new Spark Context to use for the execution of the script
     sc = SparkContext(conf=conf)
 
     p = 0.01
-    # path = "hdfs://172.16.4.137:8020/dataset.tsv"
-    path = "data.tsv"
+    path = "dataset.tsv"
 
     spark = SparkSession(sc)
+    spark.sparkContext.setLogLevel('WARN')
 
     # STAGE 1
     # loading the csv removing numVotes
     print("Starting STAGE 1...")
+    start1 = time.time()
     rdd = spark.read.csv(path, sep='\t', header=True).drop('numVotes').select("tconst", "averageRating").rdd
     new_dataset = rdd.map(lambda x: (int(round(float(x[1]))), x[0]))
 
@@ -104,8 +107,12 @@ if __name__ == "__main__":
     broadcast_tot = sc.broadcast(tot_values)
     print(tot_values)
 
+    elapsed_time_stage1 = time.time() - start1
+    print(elapsed_time_stage1, "seconds")
+
     # STAGE 2
     print("Starting STAGE 2...")
+    start2 = time.time()
     print("Grouping titles...")
     title_lists = new_dataset.groupByKey()
 
@@ -123,9 +130,17 @@ if __name__ == "__main__":
     print("Broadcasting bloom filters...")
     rdd_bf = sc.broadcast(bloom_filters)
 
+    elapsed_time_stage2 = time.time() - start2
+    print(elapsed_time_stage2, "seconds")
+
     # STAGE 3
+    print("Starting STAGE 3...")
+    start3 = time.time()
     print("Checking False Positives...")
     fp_set = new_dataset.map(check_bf).reduce(lambda x, y: np.add(np.array(x, dtype=object), np.array(y, dtype=object)))
 
     for i in fp_set:
         print(i)
+
+    elapsed_time_stage3 = time.time() - start3
+    print(elapsed_time_stage3, "seconds")
