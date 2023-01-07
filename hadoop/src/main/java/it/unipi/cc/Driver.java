@@ -1,6 +1,5 @@
 package it.unipi.cc;
 
-import it.unipi.cc.calibration.CalibrationCombiner;
 import it.unipi.cc.calibration.CalibrationReducer;
 import it.unipi.cc.creation.CreationMapper;
 import it.unipi.cc.creation.CreationReducer;
@@ -165,7 +164,6 @@ public class Driver {
 
         job.setMapperClass(CalibrationMapper.class);
         job.setReducerClass(CalibrationReducer.class);
-        job.setCombinerClass(CalibrationCombiner.class);
 
         // mapper's output key and output value
         job.setMapOutputKeyClass(IntWritable.class);
