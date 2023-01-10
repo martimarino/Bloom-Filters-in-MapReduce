@@ -25,7 +25,7 @@ import java.io.IOException;
 public class Driver {
 
     // files for input and output
-    private static final String OUTPUT_FOLDER = "output/";
+    private static final String OUTPUT_FOLDER = "hadoop/output/";
     private static final String OUTPUT_CALIBRATE = "outStage1";
     private static final String OUTPUT_CREATE = "outStage2";
     private static final String OUTPUT_FP = "fp";
@@ -77,12 +77,20 @@ public class Driver {
         if(fs.exists(new Path(OUTPUT_FOLDER)))
             fs.delete(new Path(OUTPUT_FOLDER), true);
 
+        conf.set("outStage2", OUTPUT_FOLDER+OUTPUT_CREATE);
+
+        long startTime, endTime;
+
         // first stage
         print("Parameter calibration stage...");
+        // Timer
+        startTime = System.currentTimeMillis();
         if(!calibrateParams(conf)){
             fs.close();
             System.exit(-1);
         }
+        endTime = System.currentTimeMillis();
+        print("Execution time: " + (endTime - startTime) + " ms");
         print("Parameters correctly calibrated!");
 
         // read output of first stage and add m, k to configuration
@@ -114,19 +122,24 @@ public class Driver {
 
         // second stage
         print("Bloom filters creation stage...");
+        startTime = System.currentTimeMillis();
         if (!createBloomFilters(conf)) {
             fs.close();
             System.exit(-1);
         }
+        endTime = System.currentTimeMillis();
+        print("Execution time: " + (endTime - startTime) + " ms");
         print("BloomFilters correctly created!");
 
         // third stage
         print("FP computation stage...");
-        conf.set("outStage2", OUTPUT_FOLDER+OUTPUT_CREATE);
+        startTime = System.currentTimeMillis();
         if (!computeFP(conf)) {
             fs.close();
             System.exit(-1);
         }
+        endTime = System.currentTimeMillis();
+        print("Execution time: " + (endTime - startTime) + " ms");
         print("FP correctly computed!");
 
         // get fp from 3rd stage output and compute fpr for every rating

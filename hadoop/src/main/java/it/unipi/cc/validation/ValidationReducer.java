@@ -1,8 +1,5 @@
 package it.unipi.cc.validation;
 
-import org.apache.hadoop.fs.FSDataOutputStream;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.Reducer;
 
@@ -23,16 +20,16 @@ public class ValidationReducer extends Reducer<IntWritable, IntWritable, IntWrit
             counter += value.get();
 
         //ESECUZIONE SU CLUSTER
-        FileSystem fs = FileSystem.get(context.getConfiguration());
-        Path filenamePath = new Path("output/FP" + key.get() + ".txt");
-        try {
-            FSDataOutputStream fin = fs.create(filenamePath);
-            fin.writeUTF("key: " + key.get() + '\n');
-            fin.writeUTF("counter: " + counter + "\n");
-            fin.close();
-        } catch (Exception e){
-            e.printStackTrace();
-        }
+//        FileSystem fs = FileSystem.get(context.getConfiguration());
+//        Path filenamePath = new Path("output/FP" + key.get() + ".txt");
+//        try {
+//            FSDataOutputStream fin = fs.create(filenamePath);
+//            fin.writeUTF("key: " + key.get() + '\n');
+//            fin.writeUTF("counter: " + counter + "\n");
+//            fin.close();
+//        } catch (Exception e){
+//            e.printStackTrace();
+//        }
 
         outputKey.set(key.get());
         outputValue.set(counter);

@@ -1,7 +1,6 @@
 package it.unipi.cc.validation;
 
 import it.unipi.cc.model.BloomFilter;
-import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -9,7 +8,6 @@ import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.Reducer;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -24,8 +22,7 @@ public class ValidationMapper extends Mapper<Object, Text, IntWritable, IntWrita
     private final ArrayList<BloomFilter> bloomFilters = new ArrayList<>();
 
     @Override
-    protected void setup(Context context) throws IOException, InterruptedException {
-
+    protected void setup(Context context) throws IOException {
         n_rates = context.getConfiguration().getInt("n_rates", 0);
         if(n_rates == 0)
             System.exit(-1);
@@ -70,7 +67,6 @@ public class ValidationMapper extends Mapper<Object, Text, IntWritable, IntWrita
 
             if (bloomFilters.get(i).find(tokens[0]))        // count the false positives
                 fp_counters[i]++;
-
         }
     }
 
