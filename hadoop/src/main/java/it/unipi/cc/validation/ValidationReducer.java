@@ -19,18 +19,6 @@ public class ValidationReducer extends Reducer<IntWritable, IntWritable, IntWrit
         for (IntWritable value : mapper_counts)
             counter += value.get();
 
-        //ESECUZIONE SU CLUSTER
-//        FileSystem fs = FileSystem.get(context.getConfiguration());
-//        Path filenamePath = new Path("output/FP" + key.get() + ".txt");
-//        try {
-//            FSDataOutputStream fin = fs.create(filenamePath);
-//            fin.writeUTF("key: " + key.get() + '\n');
-//            fin.writeUTF("counter: " + counter + "\n");
-//            fin.close();
-//        } catch (Exception e){
-//            e.printStackTrace();
-//        }
-
         outputKey.set(key.get());
         outputValue.set(counter);
         context.write(outputKey, outputValue); // write rating and number of fp

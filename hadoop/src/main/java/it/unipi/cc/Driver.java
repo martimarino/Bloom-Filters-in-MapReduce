@@ -9,6 +9,7 @@ import it.unipi.cc.calibration.CalibrationMapper;
 import it.unipi.cc.validation.ValidationMapper;
 import it.unipi.cc.validation.ValidationReducer;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -20,7 +21,9 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 
 public class Driver {
 
@@ -28,7 +31,7 @@ public class Driver {
     private static final String OUTPUT_FOLDER = "hadoop/output/";
     private static final String OUTPUT_CALIBRATE = "outStage1";
     private static final String OUTPUT_CREATE = "outStage2";
-    private static final String OUTPUT_FP = "fp";
+    private static final String OUTPUT_FP = "outStage3";
 
     // configuration variables
     private static String INPUT;
@@ -36,6 +39,8 @@ public class Driver {
     private static int N_REDUCERS;
     private static double P;
     private static int N_LINES;
+
+    public static StringBuilder sb = new StringBuilder();
 
     public static void main(String[] args) throws IOException, InterruptedException, ClassNotFoundException {
 
@@ -77,13 +82,14 @@ public class Driver {
         if(fs.exists(new Path(OUTPUT_FOLDER)))
             fs.delete(new Path(OUTPUT_FOLDER), true);
 
+        conf.set("outStage1", OUTPUT_FOLDER+OUTPUT_CALIBRATE);
         conf.set("outStage2", OUTPUT_FOLDER+OUTPUT_CREATE);
+        conf.set("outStage3", OUTPUT_FOLDER+OUTPUT_FP);
 
         long startTime, endTime;
 
         // first stage
         print("Parameter calibration stage...");
-        // Timer
         startTime = System.currentTimeMillis();
         if(!calibrateParams(conf)){
             fs.close();
@@ -165,9 +171,10 @@ public class Driver {
 
         for (int i=0; i<N_RATES; i++) {
             falsePositiveRate[i] = falsePositiveCounter[i]/(tot-rate_count[i]);     // fpr = fp / (tot - tp)
-            print("Rating "+(i+1)+"\tfp: "+falsePositiveCounter[i]+"\tfpr: "+String.format("%.4f", falsePositiveRate[i]));
+            String fp = "Rating "+(i+1)+"\tfp: "+falsePositiveCounter[i]+"\tfpr: "+String.format("%.4f", falsePositiveRate[i]);
+            print(fp);
         }
-
+        saveExecutionResults(conf, sb.toString());
     }
 
     private static boolean calibrateParams(Configuration conf) throws IOException, InterruptedException, ClassNotFoundException {
@@ -247,6 +254,21 @@ public class Driver {
         System.out.println("\n----------------------------------------------------");
         System.out.println(s);
         System.out.println("----------------------------------------------------\n");
+        sb.append(s + '\n');
+    }
+
+    public static void saveExecutionResults(Configuration conf, String s) throws IOException {
+
+        Path filenamePath = new Path(OUTPUT_FOLDER + "/res.txt");
+        try (
+            FileSystem fs = FileSystem.get(conf);
+            FSDataOutputStream dos = fs.create(filenamePath);
+            BufferedWriter br = new BufferedWriter(new OutputStreamWriter(dos));
+        ) {
+            br.write(s);
+        } catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
 }

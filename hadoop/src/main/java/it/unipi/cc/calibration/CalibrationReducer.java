@@ -1,5 +1,6 @@
 package it.unipi.cc.calibration;
 
+import it.unipi.cc.Driver;
 import it.unipi.cc.model.IntArrayWritable;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -39,20 +40,5 @@ public class CalibrationReducer extends Reducer<IntWritable, IntWritable, IntWri
         params.set(arr);
 
         context.write(key, params);     // emit m, k, n for every bloom filter
-
-        //ESECUZIONE SU CLUSTER
-//        FileSystem fs = FileSystem.get(context.getConfiguration());
-//        Path filenamePath = new Path("output/nmk" + key.get() + ".txt");
-//        try {
-//            FSDataOutputStream fin = fs.create(filenamePath);
-//            fin.writeUTF("key " + key.get() + '\n');
-//            fin.writeUTF("m: " + m + '\n');
-//            fin.writeUTF("k: " + k + '\n');
-//            fin.writeUTF("n: " + n + '\n');
-//            fin.close();
-//        } catch (Exception e){
-//            e.printStackTrace();
-//        }
-
     }
 }
