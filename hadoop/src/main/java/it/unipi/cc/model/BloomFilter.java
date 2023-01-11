@@ -46,6 +46,16 @@ public class BloomFilter implements Writable {
         return k;
     }
 
+    public boolean insert(String id) {
+        int index;
+        for(int i=0; i<k; i++) {
+            index = Math.abs(MurmurHash.getInstance(MURMUR_HASH).hash(id.getBytes(StandardCharsets.UTF_8), i));
+            index = index % m;
+            bs.set(index);
+        }
+        return true;
+    }
+
     public boolean find(String id) {
         int index;
         for(int i=0; i<k; i++){

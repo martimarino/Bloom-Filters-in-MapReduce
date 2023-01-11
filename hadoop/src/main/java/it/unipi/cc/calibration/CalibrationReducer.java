@@ -1,10 +1,6 @@
 package it.unipi.cc.calibration;
 
-import it.unipi.cc.Driver;
 import it.unipi.cc.model.IntArrayWritable;
-import org.apache.hadoop.fs.FSDataOutputStream;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.Reducer;
 
