@@ -1,7 +1,7 @@
-META-INF/
-out/
-output/
-target/
+**/META-INF
+**/out
+**/output
+**/target
 *.tsv
 *.txt
-*.DS_Store
+**/.DS_Store
