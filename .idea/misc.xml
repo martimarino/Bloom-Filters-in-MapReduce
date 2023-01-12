@@ -5,14 +5,12 @@
     <option name="originalFiles">
       <list>
         <option value="$PROJECT_DIR$/hadoop/pom.xml" />
-        <option value="$PROJECT_DIR$/createBF/pom.xml" />
+        <option value="$PROJECT_DIR$/sendBF/sendBF/pom.xml" />
+        <option value="$PROJECT_DIR$/bloomfilter/bloomfilter/pom.xml" />
+        <option value="$PROJECT_DIR$/bloomfilter/pom.xml" />
         <option value="$PROJECT_DIR$/parametersDriver/pom.xml" />
-      </list>
-    </option>
-    <option name="ignoredFiles">
-      <set>
         <option value="$PROJECT_DIR$/sendBF/pom.xml" />
-      </set>
+      </list>
     </option>
   </component>
   <component name="ProjectRootManager" version="2" project-jdk-name="17" project-jdk-type="JavaSDK" />
