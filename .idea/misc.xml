@@ -9,6 +9,11 @@
         <option value="$PROJECT_DIR$/parametersDriver/pom.xml" />
       </list>
     </option>
+    <option name="ignoredFiles">
+      <set>
+        <option value="$PROJECT_DIR$/sendBF/pom.xml" />
+      </set>
+    </option>
   </component>
   <component name="ProjectRootManager" version="2" project-jdk-name="17" project-jdk-type="JavaSDK" />
   <component name="ProjectType">
