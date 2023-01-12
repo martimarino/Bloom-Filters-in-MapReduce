@@ -5,6 +5,8 @@
     <option name="originalFiles">
       <list>
         <option value="$PROJECT_DIR$/hadoop/pom.xml" />
+        <option value="$PROJECT_DIR$/createBF/pom.xml" />
+        <option value="$PROJECT_DIR$/parametersDriver/pom.xml" />
       </list>
     </option>
   </component>
