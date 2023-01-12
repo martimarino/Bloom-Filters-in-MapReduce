@@ -1,10 +1,7 @@
-/hadoop/.idea/
-/hadoop/META-INF/
-/hadoop/out/
-/hadoop/output/
-/hadoop/target/
+**/META-INF
+**/out
+**/output
+**/target
 *.tsv
 *.txt
-/output
-/out
-.DS_Store
+**/.DS_Store
