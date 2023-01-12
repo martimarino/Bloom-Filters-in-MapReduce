@@ -12,5 +12,8 @@
         <module name="bloomfilter" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="sendBF" target="1.8" />
+    </bytecodeTargetLevel>
   </component>
 </project>
