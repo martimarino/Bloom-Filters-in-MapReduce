@@ -6,7 +6,6 @@
       <list>
         <option value="$PROJECT_DIR$/hadoop/pom.xml" />
         <option value="$PROJECT_DIR$/sendBF/sendBF/pom.xml" />
-        <option value="$PROJECT_DIR$/bloomfilter/bloomfilter/pom.xml" />
         <option value="$PROJECT_DIR$/bloomfilter/pom.xml" />
         <option value="$PROJECT_DIR$/parametersDriver/pom.xml" />
         <option value="$PROJECT_DIR$/sendBF/pom.xml" />
