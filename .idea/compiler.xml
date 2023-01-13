@@ -10,5 +10,9 @@
         <module name="hadoop" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="parametersDriver" target="1.8" />
+      <module name="sendBF" target="1.8" />
+    </bytecodeTargetLevel>
   </component>
 </project>
