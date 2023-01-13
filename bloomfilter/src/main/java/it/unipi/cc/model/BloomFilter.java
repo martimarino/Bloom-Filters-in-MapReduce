@@ -1,6 +1,7 @@
 package it.unipi.cc.model;
 
 import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.util.hash.Hash;
 import org.apache.hadoop.util.hash.MurmurHash;
 
 import java.io.DataInput;
@@ -8,10 +9,11 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.BitSet;
+import java.util.Objects;
 
 import static org.apache.hadoop.util.hash.Hash.MURMUR_HASH;
 
-public class BloomFilter implements Writable {
+public class BloomFilter implements Writable, Comparable<BloomFilter> {
     private int k;
     private int m;
     private BitSet bs;
@@ -95,4 +97,23 @@ public class BloomFilter implements Writable {
         bs = BitSet.valueOf(longs);
     }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(bs, k, Hash.getInstance(MURMUR_HASH));
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        BloomFilter that = (BloomFilter) o;
+        return k == that.k && Objects.equals(bs, that.bs);
+    }
+
+    @Override
+    public int compareTo(BloomFilter bf) {
+        if(bf.equals(bs))
+            return 1;
+        return 0;
+    }
 }

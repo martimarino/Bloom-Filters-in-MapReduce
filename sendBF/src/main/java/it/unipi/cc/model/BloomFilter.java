@@ -1,6 +1,7 @@
 package it.unipi.cc.model;
 
 import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.util.hash.Hash;
 import org.apache.hadoop.util.hash.MurmurHash;
 
 import java.io.DataInput;
@@ -8,11 +9,11 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.BitSet;
+import java.util.Objects;
 
 import static org.apache.hadoop.util.hash.Hash.MURMUR_HASH;
 
-
-public class BloomFilter implements Writable {
+public class BloomFilter implements Writable, Comparable<BloomFilter> {
     private int k;
     private int m;
     private BitSet bs;
@@ -24,19 +25,6 @@ public class BloomFilter implements Writable {
         this.m = m;
         this.bs = b;
     }
-    //
-    public BloomFilter(BloomFilter bf){
-        this.bs = (BitSet) bf.bs.clone();
-        this.m = bf.m;
-        this.k = bf.k;
-    }
-
-    public BloomFilter(int m, int k){
-        bs = new BitSet(m);
-        this.m = m;
-        this.k = k;
-    }
-    //
 
     public void setM(int m) {
         this.m = m;
@@ -60,17 +48,6 @@ public class BloomFilter implements Writable {
         return k;
     }
 
-    public boolean find(String id) {
-        int index;
-        for(int i=0; i<k; i++){
-            index = Math.abs(MurmurHash.getInstance(MURMUR_HASH).hash(id.getBytes(StandardCharsets.UTF_8), i));
-            index = index % m;
-            if (!bs.get(index))
-                return false;
-        }
-        return true;
-    }
-    //
     public boolean insert(String id) {
         int index;
         for(int i=0; i<k; i++) {
@@ -81,10 +58,17 @@ public class BloomFilter implements Writable {
         return true;
     }
 
-    public void or(BitSet next_bf) {
-        bs.or(next_bf);
+    public boolean find(String id) {
+        int index;
+        for(int i=0; i<k; i++){
+            index = Math.abs(MurmurHash.getInstance(MURMUR_HASH).hash(id.getBytes(StandardCharsets.UTF_8), i));
+            index = index % m;
+            if (!bs.get(index))
+                return false;
+        }
+        return true;
     }
-    //
+
     public String toString() {
         return bs.toString();
     }
@@ -113,4 +97,23 @@ public class BloomFilter implements Writable {
         bs = BitSet.valueOf(longs);
     }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(bs, k, Hash.getInstance(MURMUR_HASH));
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        BloomFilter that = (BloomFilter) o;
+        return k == that.k && Objects.equals(bs, that.bs);
+    }
+
+    @Override
+    public int compareTo(BloomFilter bf) {
+        if(bf.equals(bs))
+            return 1;
+        return 0;
+    }
 }
