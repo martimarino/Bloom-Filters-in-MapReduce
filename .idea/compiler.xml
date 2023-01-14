@@ -10,10 +10,11 @@
         <module name="parametersDriver" />
         <module name="sendBF" />
         <module name="bloomfilter" />
+        <module name="bloomfilter (1) (it.unipi.cc.hadoop)" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="bloomfilter (1)" target="1.8" />
+      <module name="bloomfilter (1)" target="8" />
     </bytecodeTargetLevel>
   </component>
 </project>
