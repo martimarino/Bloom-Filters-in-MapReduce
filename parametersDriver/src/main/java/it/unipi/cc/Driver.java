@@ -88,7 +88,7 @@ public class Driver {
         }
 
         endTime = System.currentTimeMillis();
-        print("Execution time: " + (endTime - startTime) + " ms");
+        print("Execution time stage 1: " + (endTime - startTime) + " ms");
         print("Parameters correctly calibrated!");
 
         // read output of first stage and add m, k to configuration
@@ -128,7 +128,7 @@ public class Driver {
             System.exit(-1);
         }
         endTime = System.currentTimeMillis();
-        print("Execution time: " + (endTime - startTime) + " ms");
+        print("Execution time stage 2: " + (endTime - startTime) + " ms");
         print("BloomFilters correctly created!");
 
         // third stage
@@ -140,7 +140,7 @@ public class Driver {
             System.exit(-1);
         }
         endTime = System.currentTimeMillis();
-        print("Execution time: " + (endTime - startTime) + " ms");
+        print("Execution time stage 3: " + (endTime - startTime) + " ms");
         print("FP correctly computed!");
 
         // get fp from 3rd stage output and compute fpr for every rating

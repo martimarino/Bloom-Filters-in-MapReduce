@@ -26,6 +26,19 @@ public class BloomFilter implements Writable, Comparable<BloomFilter> {
         this.bs = b;
     }
 
+    public BloomFilter(int m, int k){
+        bs = new BitSet(m);
+        this.m = m;
+        this.k = k;
+    }
+
+    public BloomFilter(BloomFilter bf){
+        this.bs = (BitSet) bf.bs.clone();
+        this.m = bf.m;
+        this.k = bf.k;
+    }
+
+
     public void setM(int m) {
         this.m = m;
     }
@@ -67,6 +80,10 @@ public class BloomFilter implements Writable, Comparable<BloomFilter> {
                 return false;
         }
         return true;
+    }
+
+    public void or(BitSet next_bf) {
+        bs.or(next_bf);
     }
 
     public String toString() {
