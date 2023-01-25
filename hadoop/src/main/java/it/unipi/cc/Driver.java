@@ -9,7 +9,6 @@ import it.unipi.cc.calibration.CalibrationMapper;
 import it.unipi.cc.validation.ValidationMapper;
 import it.unipi.cc.validation.ValidationReducer;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -21,17 +20,15 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
 
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 
 public class Driver {
 
     // files for input and output
-    private static final String OUTPUT_FOLDER = "hadoop/output/";
+    private static final String OUTPUT_FOLDER = "output/";
     private static final String OUTPUT_CALIBRATE = "outStage1";
     private static final String OUTPUT_CREATE = "outStage2";
-    private static final String OUTPUT_FP = "outStage3";
+    private static final String OUTPUT_FP = "fp";
 
     // configuration variables
     private static String INPUT;
@@ -39,8 +36,6 @@ public class Driver {
     private static int N_REDUCERS;
     private static double P;
     private static int N_LINES;
-
-    public static StringBuilder sb = new StringBuilder();
 
     public static void main(String[] args) throws IOException, InterruptedException, ClassNotFoundException {
 
@@ -82,26 +77,19 @@ public class Driver {
         if(fs.exists(new Path(OUTPUT_FOLDER)))
             fs.delete(new Path(OUTPUT_FOLDER), true);
 
-        conf.set("outStage1", OUTPUT_FOLDER+OUTPUT_CALIBRATE);
-        conf.set("outStage2", OUTPUT_FOLDER+OUTPUT_CREATE);
-        conf.set("outStage3", OUTPUT_FOLDER+OUTPUT_FP);
-
-        long startTime, endTime;
-
         // first stage
         print("Parameter calibration stage...");
-        startTime = System.currentTimeMillis();
         if(!calibrateParams(conf)){
             fs.close();
             System.exit(-1);
         }
-        endTime = System.currentTimeMillis();
-        print("Execution time: " + (endTime - startTime) + " ms");
         print("Parameters correctly calibrated!");
 
         // read output of first stage and add m, k to configuration
         FileStatus[] status = fs.listStatus(new Path(OUTPUT_FOLDER + OUTPUT_CALIBRATE));
-        int[] params = new int[3];              // for m, k, n
+        int n, m, k=0;// for m, k, n
+        double p = conf.getDouble("p", 0.01);
+
         int[] rate_count = new int[N_RATES];    // array of n of every bloom filter
 
         for(FileStatus filestatus : status) {
@@ -109,43 +97,37 @@ public class Driver {
             if(f.contains("SUCCESS"))
                 continue;
             IntWritable key = new IntWritable();
-            IntArrayWritable value = new IntArrayWritable();
+            IntWritable nWritable = new IntWritable();
             try (SequenceFile.Reader reader = new SequenceFile.Reader(conf, SequenceFile.Reader.file(filestatus.getPath()))) {
-                while (reader.next(key, value)) {
-                    IntWritable mWritable = (IntWritable) value.get()[0];
-                    IntWritable kWritable = (IntWritable) value.get()[1];
-                    IntWritable nWritable = (IntWritable) value.get()[2];
-                    params[0] = mWritable.get();
-                    params[1] = kWritable.get();
-                    params[2] = nWritable.get();
-                    conf.set("filter_k", String.valueOf(params[1]));
-                    conf.set("filter_" + key.get()+ "_m", String.valueOf(params[0]));
-                    rate_count[key.get()-1] = params[2];
-                    Driver.print("Rating " + key + "\tm: " + params[0] + "\tk: " + params[1] + "\tn: " + params[2]);
+                while (reader.next(key, nWritable)) {
+                    n = nWritable.get();
+                    m = (int) (- (n * Math.log(p)) / (Math.pow(Math.log(2),2)));
+                    k = (int) ((m/n) * Math.log(2));
+
+                    //conf.set("filter_n", String.valueOf(n));
+                    conf.set("filter_" + key.get()+ "_m", String.valueOf(m));
+                    rate_count[key.get()-1] = n;
+                    Driver.print("Rating " + key + "\tm: " + m + "\tk: " + k + "\tn: " + n);
                 }
+                conf.set("filter_k", String.valueOf(k));
             }
         }
 
         // second stage
         print("Bloom filters creation stage...");
-        startTime = System.currentTimeMillis();
         if (!createBloomFilters(conf)) {
             fs.close();
             System.exit(-1);
         }
-        endTime = System.currentTimeMillis();
-        print("Execution time: " + (endTime - startTime) + " ms");
         print("BloomFilters correctly created!");
 
         // third stage
         print("FP computation stage...");
-        startTime = System.currentTimeMillis();
+        conf.set("outStage2", OUTPUT_FOLDER+OUTPUT_CREATE);
         if (!computeFP(conf)) {
             fs.close();
             System.exit(-1);
         }
-        endTime = System.currentTimeMillis();
-        print("Execution time: " + (endTime - startTime) + " ms");
         print("FP correctly computed!");
 
         // get fp from 3rd stage output and compute fpr for every rating
@@ -171,10 +153,9 @@ public class Driver {
 
         for (int i=0; i<N_RATES; i++) {
             falsePositiveRate[i] = falsePositiveCounter[i]/(tot-rate_count[i]);     // fpr = fp / (tot - tp)
-            String fp = "Rating "+(i+1)+"\tfp: "+falsePositiveCounter[i]+"\tfpr: "+String.format("%.4f", falsePositiveRate[i]);
-            print(fp);
+            print("Rating "+(i+1)+"\tfp: "+falsePositiveCounter[i]+"\tfpr: "+String.format("%.4f", falsePositiveRate[i]));
         }
-        saveExecutionResults(conf, sb.toString());
+
     }
 
     private static boolean calibrateParams(Configuration conf) throws IOException, InterruptedException, ClassNotFoundException {
@@ -191,7 +172,7 @@ public class Driver {
 
         // reducer's output key and output value
         job.setOutputKeyClass(IntWritable.class);
-        job.setOutputValueClass(IntArrayWritable.class);
+        job.setOutputValueClass(IntWritable.class);
         job.setNumReduceTasks(N_REDUCERS);
         job.getConfiguration().setDouble("p", P);
 
@@ -254,21 +235,6 @@ public class Driver {
         System.out.println("\n----------------------------------------------------");
         System.out.println(s);
         System.out.println("----------------------------------------------------\n");
-        sb.append(s + '\n');
-    }
-
-    public static void saveExecutionResults(Configuration conf, String s) throws IOException {
-
-        Path filenamePath = new Path(OUTPUT_FOLDER + "/res.txt");
-        try (
-            FileSystem fs = FileSystem.get(conf);
-            FSDataOutputStream dos = fs.create(filenamePath);
-            BufferedWriter br = new BufferedWriter(new OutputStreamWriter(dos));
-        ) {
-            br.write(s);
-        } catch (Exception e){
-            e.printStackTrace();
-        }
     }
 
 }
